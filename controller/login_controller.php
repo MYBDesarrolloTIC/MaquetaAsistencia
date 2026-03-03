@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../model/usuario.php'; 
+require_once '../controller/usuario.php'; 
 
 header('Content-Type: application/json'); 
 
