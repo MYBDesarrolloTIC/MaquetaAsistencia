@@ -1,0 +1,381 @@
+/* =========================================
+   VARIABLES GLOBALES Y BASE
+   ========================================= */
+:root {
+    --yb-red: #d9251c;
+    --yb-blue: #1b365d;
+    --yb-black: #000000;
+}
+
+body {
+    background-color: #eaeff4; 
+}
+
+/* Fondo principal compartido entre el dashboard y asistencia */
+.main-content,
+.bg-main-content {
+    background-color: #eaeff4 !important;
+}
+
+/* =========================================
+   ESTILOS DE LOGIN
+   ========================================= */
+
+/* Tarjeta principal que contiene las funciones del login */
+.login-card {
+    background-color: #ffffff; 
+    border: none;
+    border-top: 8px solid var(--yb-red);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    position: relative;
+}
+
+/* Forzar letras negras en todo el texto para no confundir */
+.login-card h3, 
+.login-card label, 
+.login-card input {
+    color: var(--yb-black) !important;
+}
+
+/* Icono del usuario básico de Bootstrap */
+.user-icon {
+    font-size: 5rem;
+    color: var(--yb-red); 
+    line-height: 1;
+}
+
+/* Inputs y efecto focus para el borde rojo */
+.form-control {
+    border: 1px solid #ced4da;
+}
+
+.form-control:focus {
+    border-color: var(--yb-red);
+    box-shadow: 0 0 0 0.25rem rgba(217, 37, 28, 0.25);
+}
+
+/* Botón de inicio de sesión */
+.btn-custom {
+    background-color: var(--yb-blue); 
+    color: #ffffff !important; 
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+    background-color: #11233d; 
+    box-shadow: 0 4px 10px rgba(27, 54, 93, 0.3);
+}
+
+/* Nombre de la municipalidad inyectado desde CSS */
+.login-card::after {
+    content: "I. Municipalidad de Yerbas Buenas";
+    display: block;
+    text-align: center;
+    margin-top: 25px;
+    padding-top: 15px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--yb-black); 
+    border-top: 2px solid #f0f0f0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* =========================================
+   ESTILOS DEL MENÚ LATERAL (ESTÉTICA LOGIN)
+   ========================================= */
+
+/* Contenedor del menú: Blanco, simple y con borde plano */
+.sidebar {
+    width: 260px;
+    min-width: 260px;
+    background-color: #ffffff;
+    border-right: 1px solid #ced4da; 
+    z-index: 1000;
+}
+
+/* Icono de usuario principal del menú */
+.user-icon-menu {
+    font-size: 4.5rem;
+    color: var(--yb-red); 
+    line-height: 1;
+}
+
+/* Forzar texto negro en la información del usuario */
+.sidebar h5,
+.sidebar small {
+    color: var(--yb-black) !important;
+}
+
+/* Estilo base de los enlaces del menú: Simples y planos */
+.sidebar .list-group-item {
+    border: none;
+    padding: 14px 20px;
+    color: var(--yb-black); 
+    font-weight: 600;
+    background-color: #ffffff;
+}
+
+/* Iconos del menú en estado normal */
+.sidebar .list-group-item i {
+    font-size: 1.2rem;
+    color: var(--yb-blue); 
+    vertical-align: middle;
+}
+
+/* Efecto Hover: Cambio de color instantáneo al pasar el mouse */
+.sidebar .list-group-item:hover {
+    background-color: #eaeff4; 
+    color: var(--yb-black);
+}
+
+/* Pestaña Activa: Azul sólido y borde rojo */
+.sidebar .list-group-item.active {
+    background-color: var(--yb-blue);
+    color: #ffffff !important;
+    border-left: 6px solid var(--yb-red); 
+    border-radius: 0;
+}
+
+.sidebar .list-group-item.active i {
+    color: #ffffff;
+}
+
+/* Estilo estático para el botón de cerrar sesión */
+.sidebar .btn-outline-danger {
+    border: 2px solid var(--yb-red);
+    color: var(--yb-red);
+    font-weight: 600;
+    border-radius: 6px;
+}
+
+.sidebar .btn-outline-danger:hover {
+    background-color: var(--yb-red);
+    color: #ffffff;
+}
+
+/* =========================================
+   UTILIDADES Y COLORES INSTITUCIONALES
+   ========================================= */
+
+/* Utilidades de Texto */
+.text-danger-yb { color: var(--yb-red) !important; }
+.text-blue-yb { color: var(--yb-blue) !important; }
+.text-black { color: var(--yb-black) !important; }
+.text-muted { color: #6c757d !important; }
+.text-warning-dark { color: #856404 !important; } 
+
+/* Utilidades de Fondo Claro (Soft Backgrounds) */
+.bg-danger-yb-light { background-color: rgba(217, 37, 28, 0.1) !important; }
+.bg-blue-yb-light { background-color: rgba(27, 54, 93, 0.1) !important; }
+.bg-success-light { background-color: rgba(25, 135, 84, 0.1) !important; }
+.bg-warning-light { background-color: rgba(255, 193, 7, 0.15) !important; }
+
+/* Utilidades de Bordes (Tarjetas y Modales) */
+.border-start-blue { border-left: 5px solid var(--yb-blue) !important; }
+.border-start-danger { border-left: 5px solid var(--yb-red) !important; }
+.border-start-success { border-left: 5px solid #198754 !important; }
+.border-start-warning { border-left: 5px solid #ffc107 !important; }
+.border-top-danger-yb { border-top: 5px solid var(--yb-red) !important; }
+
+/* =========================================
+   COMPONENTES DEL DASHBOARD (INICIO)
+   ========================================= */
+
+.header-seccion {
+    border-color: #ced4da !important;
+}
+
+.card-dashboard {
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+.icon-shape {
+    width: 60px;
+    height: 60px;
+    background-color: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+
+/* =========================================
+   VISTA ASISTENCIA: LISTA Y CASCADA
+   ========================================= */
+
+.funcionario-item {
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Efecto hover ligero sobre la fila principal */
+.fila-visible:hover {
+    background-color: #f8f9fa !important;
+}
+/* =========================================
+   VISTA ASISTENCIA: CALENDARIO TRADICIONAL
+   ========================================= */
+
+/* Encabezado (Lunes a Domingo) */
+.calendar-header-trad {
+    display: grid !important; 
+    grid-template-columns: repeat(7, 1fr) !important;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+    /* NUEVO: Limita el ancho y lo centra en su columna */
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Contenedor tipo tabla con bordes exteriores */
+.calendar-grid-trad {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr) !important;
+    border-top: 1px solid #dee2e6;
+    border-left: 1px solid #dee2e6;
+    background-color: #ffffff;
+    /* NUEVO: Limita el ancho y lo centra en su columna */
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Celda individual (Día) */
+.calendar-cell {
+    /* ELIMINADO: aspect-ratio: 1 / 1; (Esto era lo que lo hacía gigante) */
+    min-height: 70px; /* NUEVO: Altura fija y controlada */
+    border-right: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: #ffffff;
+}
+
+/* Número del día en la esquina superior izquierda */
+.calendar-cell .day-number {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #495057;
+    align-self: flex-start;
+}
+
+/* Indicador visual (puntito) en la esquina inferior derecha */
+.cell-indicator {
+    align-self: flex-end;
+    font-size: 0.65rem;
+}
+
+/* --- ESTADOS DE LA CELDA --- */
+
+/* Día vacío (Fines de semana o fuera de mes) */
+.cell-empty {
+    background-color: #f8f9fa;
+}
+.cell-empty .day-number {
+    color: #ced4da; /* Número gris claro */
+}
+
+/* Asistencia Completa */
+.cell-success {
+    background-color: rgba(25, 135, 84, 0.03); 
+    box-shadow: inset 0 -4px 0 #198754; 
+}
+
+/* Atraso o Incompleto */
+.cell-warning {
+    background-color: rgba(255, 193, 7, 0.05);
+    box-shadow: inset 0 -4px 0 #ffc107;
+}
+
+/* Inasistencia */
+.cell-danger {
+    background-color: rgba(220, 53, 69, 0.03);
+    box-shadow: inset 0 -4px 0 #dc3545;
+}
+
+/* Efecto hover */
+.calendar-cell:not(.cell-empty):hover {
+    filter: brightness(0.95);
+    cursor: pointer;
+}
+
+/* =========================================
+   VISTA ESCÁNER DE ASISTENCIA (TERMINAL)
+   ========================================= */
+
+/* Estilo del Reloj Digital */
+#reloj-digital {
+    /* Usamos una fuente monoespaciada para dar el look de reloj led/digital 
+       y evitar que el texto "tiemble" cuando cambian los segundos (ej. del 1 al 0) */
+    font-family: 'Courier New', Courier, monospace; 
+    letter-spacing: -2px;
+    text-shadow: 2px 2px 4px rgba(27, 54, 93, 0.15); /* Sombra suave azul */
+}
+
+/* Barra superior del Escáner */
+.navbar {
+    border-bottom: 3px solid var(--yb-red) !important; /* Línea roja institucional superior */
+}
+
+/* Input del Escáner (Estado de espera) */
+#input-escaner {
+    border: 2px dashed #ced4da; /* Borde punteado para indicar zona de escaneo */
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    caret-color: transparent; /* Oculta el palito parpadeante del cursor para que parezca un terminal ciego */
+}
+
+/* Input del Escáner (Estado Enfocado - Listo para leer) */
+#input-escaner:focus {
+    border: 2px solid var(--yb-red); /* Cambia a línea sólida roja */
+    background-color: #ffffff;
+    box-shadow: 0 0 20px rgba(217, 37, 28, 0.15); /* Resplandor rojo alrededor */
+    outline: none;
+}
+
+/* Ocultar el texto que la pistola escribe súper rápido (opcional, para mayor limpieza) */
+#input-escaner:focus::placeholder {
+    color: #adb5bd;
+}
+
+/* -----------------------------------------
+   ANIMACIÓN DE LA TARJETA DE RESULTADOS
+   ----------------------------------------- */
+   
+/* Creamos la animación de aparición (Pop In) */
+@keyframes popIn {
+    0% { 
+        opacity: 0; 
+        transform: scale(0.9) translateY(15px); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
+}
+
+/* Aplicamos la animación solo cuando el div YA NO tiene la clase d-none */
+#resultado-escaneo:not(.d-none) {
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Detalles internos de la tarjeta de resultado */
+#resultado-escaneo .bg-light {
+    border-color: #e9ecef !important;
+    border-radius: 8px;
+}
