@@ -3,15 +3,15 @@ const API_REQUEST_SUCCESS = 1;
 
 const validUser = async (username, password) => {
    if (username.trim().length > 0) {
-      if (password.trim().length >= 8) {
+      if (password.length >= 8) {
          const request = await fetch("../../controller/login_controller.php", {
             method: "POST",
             headers: {
                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-               username,
-               password,
+               username: encodeURIComponent(username),
+               password: encodeURIComponent(password),
             })
          });
 

@@ -8,8 +8,8 @@ $json_input = file_get_contents('php://input');
 $data = json_decode($json_input, true);
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $data) {
-    $nombre_usuario = trim($data['username']);
-    $contra = trim($data['password']);
+    $nombre_usuario = ($data['username']);
+    $contra = ($data['password']);
 
     if (empty($nombre_usuario) || empty($contra)) {
         echo json_encode(['status' => 0, 'message' => 'Campos vacíos']);

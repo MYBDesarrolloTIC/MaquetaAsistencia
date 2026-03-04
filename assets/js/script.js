@@ -9,20 +9,16 @@ const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Ju
    INICIALIZACIÓN DEL DOCUMENTO (DOM Ready)
    ========================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. Inicializar Login (Solo si estamos en la pantalla de Login)
-    const formLogin = document.getElementById("form_login");
+        const formLogin = document.getElementById("form_login");
     if (formLogin) {
         formLogin.addEventListener("submit", procesarLogin);
     }
 
-    // 2. Inicializar Calendario (Solo si existe un contenedor de calendario en la vista actual)
     const calendarioEjemplo = document.getElementById("calendario-dias-1");
     if (calendarioEjemplo) {
         dibujarCalendario(1, fechaActualVisualizacion);
     }
 
-    // 3. Inicializar Botón Borrar Modal (Solo si existe el botón en la vista)
     const btnBorrar = document.getElementById('btn-confirmar-borrar');
     if (btnBorrar) {
         btnBorrar.addEventListener('click', ejecutarBorrado);
@@ -41,16 +37,11 @@ async function procesarLogin(e) {
     const vuser = await validUser(userVal, passVal);
 
     if (vuser.status === API_REQUEST_SUCCESS) {
-        // 1. CHIVATO: Imprimimos en la consola de F12 todo el paquete que llegó
         console.log("Datos que llegaron del PHP:", vuser.data);
 
-        // 2. BLINDAJE: Convertimos lo que llegue a texto, a minúsculas y sin espacios
-        // Si el rol viene vacío, le ponemos "usuario" por defecto para que no explote
         const rolUsuario = String(vuser.data.rol || 'usuario').toLowerCase().trim();
-        
         console.log("Rol limpio que usará el IF:", rolUsuario);
 
-        // 3. Redirección
         if (rolUsuario === 'superadmin') {
             window.location.href = "VistaInicio.html"; 
         } else if (rolUsuario === 'admin') {
