@@ -8,19 +8,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100">
+<body class="d-flex align-items-center justify-content-center vh-100 bg-light">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-                <div class="card login-card p-4">
+                <div class="card shadow p-4 border-0 border-top-danger-yb">
                     <div class="text-center mb-3">
-                        <i class="bi bi-person-circle user-icon" style="font-size: 3rem;"></i>
+                        <i class="bi bi-building text-primary" style="font-size: 3rem;"></i>
                     </div>
 
-                    
+                    <div id="alertaError" class="alert alert-danger d-none text-center p-2 mb-3"></div>
 
-                    <form id="form_login" action="../../controller/login_controller.php" method="POST">
-                        <h2 class="text-center fw-bold mb-4">Iniciar Sesión</h2>
+                    <form id="form_login">
+                        <h3 class="text-center fw-bold mb-4">Iniciar Sesión</h3>
                         <div class="mb-3">
                             <label for="usuario" class="form-label fw-semibold">Usuario:</label>
                             <input type="text" id="usuario" name="usuario" class="form-control" required>
@@ -29,7 +29,7 @@
                             <label for="password" class="form-label fw-semibold">Contraseña:</label>
                             <input type="password" id="password" name="password" class="form-control" required>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2">Entrar</button>
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Entrar</button>
                     </form>
                 </div>
             </div>

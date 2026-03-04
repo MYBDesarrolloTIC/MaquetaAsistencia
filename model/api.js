@@ -34,10 +34,7 @@ const validUser = async (username, password) => {
 
 const api = {
 
-   // URL base hacia tu controlador PHP
    baseUrl: '../../controller/controller.php',
-
-   // 1. Obtener todos los funcionarios para armar la lista
    obtenerFuncionarios: async () => {
       try {
          const respuesta = await fetch(`${api.baseUrl}?action=getFuncionarios`);
@@ -48,10 +45,8 @@ const api = {
       }
    },
 
-   // 2. Obtener la asistencia de un funcionario para armar el calendario
    obtenerAsistenciaMes: async (rut, mes, anio) => {
       try {
-         // Pasamos los parámetros por GET
          const respuesta = await fetch(`${api.baseUrl}?action=getAsistencia&rut=${rut}&mes=${mes}&anio=${anio}`);
          return await respuesta.json();
       } catch (error) {
@@ -59,7 +54,6 @@ const api = {
       }
    },
 
-   // 3. Eliminar funcionario (CRUD)
    eliminarFuncionario: async (rut) => {
       try {
          const respuesta = await fetch(api.baseUrl, {
@@ -73,13 +67,11 @@ const api = {
       }
    },
 
-   // 4. Actualizar funcionario (CRUD)
    actualizarFuncionario: async (datosFuncionario) => {
       try {
          const respuesta = await fetch(api.baseUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // datosFuncionario debe ser un objeto: {rut: 123, nombres: '...', etc.}
             body: JSON.stringify({ action: 'updateFuncionario', ...datosFuncionario })
          });
          return await respuesta.json();
@@ -87,4 +79,61 @@ const api = {
          console.error("Error API actualizarFuncionario:", error);
       }
    }
+};
+
+
+
+
+// api turnos por pablito
+// Objeto exclusivo para hablar con el controlador de turnos
+const apiTurnos = {
+    baseUrl: '../../controller/turno_controller.php',
+
+    // Función "cazadora de errores": Nos dirá exactamente qué escupe PHP
+    procesarPeticion: async (url, opciones) => {
+        try {
+            const req = await fetch(url, opciones);
+            const textoCrudo = await req.text(); // Atrapamos la respuesta cruda de PHP
+            
+            try {
+                return JSON.parse(textoCrudo); // Intentamos convertirlo a JSON
+            } catch (errorParseo) {
+                // SI PHP DIO ERROR, CAEREMOS AQUÍ Y LO VEREMOS EN CONSOLA
+                console.error("❌ ERROR EN PHP DETECTADO ❌");
+                console.error("Lo que PHP devolvió realmente fue:", textoCrudo);
+                return { status: 0, message: "Error interno del servidor. Revisa la consola (F12)." };
+            }
+        } catch (errorRed) {
+            console.error("Error real de conexión:", errorRed);
+            return { status: 0, message: "No se pudo conectar con el servidor." };
+        }
+    },
+
+    getTurnos: async () => {
+        return await apiTurnos.procesarPeticion(`${apiTurnos.baseUrl}?action=getTurnos`, { method: 'GET' });
+    },
+
+    createTurno: async (datos) => {
+        return await apiTurnos.procesarPeticion(apiTurnos.baseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'createTurno', ...datos })
+        });
+    },
+
+    updateTurno: async (datos) => {
+        return await apiTurnos.procesarPeticion(apiTurnos.baseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'updateTurno', ...datos })
+        });
+    },
+
+    deleteTurno: async (id) => {
+        return await apiTurnos.procesarPeticion(apiTurnos.baseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'deleteTurno', id: id })
+        });
+    }
 };
