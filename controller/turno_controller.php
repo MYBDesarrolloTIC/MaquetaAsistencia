@@ -1,10 +1,9 @@
 <?php
 session_start();
-require_once '../controller/turno.php'; 
+require_once 'clases/turno.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// EL CANDADO DE SEGURIDAD: Solo admin y superadmin pasan de esta línea
 $rol = $_SESSION['rol'] ?? '';
 if ($rol !== 'admin' && $rol !== 'superadmin') {
     echo json_encode(['status' => 0, 'message' => 'Acceso denegado. No tienes permisos para gestionar turnos.']);

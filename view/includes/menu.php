@@ -25,19 +25,19 @@
                 <a href="VistaDepartamento.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-building me-2"></i> Departamentos
                 </a>
-                <a href="VistaReporte.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-file-earmark-bar-graph me-2"></i> Reportes
-                </a>
                 <a href="VistaTurno.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-calendar-check me-2"></i> Turnos
                 </a>
                 <a href="VistaEnrolar.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-person-plus-fill me-2"></i> Enrolar
                 </a>
+                <a href="VistaEscaner.php" class="list-group-item list-group-item-action">
+                    <i class="bi bi-building me-2"></i> Escaner
+                </a>
             </div>
             <div class="p-3 border-top">
-                <a href="VistaLogin.php" class="btn btn-outline-danger w-100 fw-bold">
-                    <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
+                <a href="../../controller/login_controller.php?action=logout" class="btn btn-outline-danger w-100 fw-bold">
+                <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
                 </a>
             </div>
         </nav>

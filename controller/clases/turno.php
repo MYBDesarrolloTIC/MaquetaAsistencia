@@ -1,12 +1,11 @@
 <?php
-require_once '../config/conexion.php';
+require_once __DIR__ .'/../../config/conexion.php';
 
 class Turno {
     public static function obtenerTodos() {
         try {
             $pdo = Conexion::conectar();
             
-            // TRUCO: Usamos AS para disfrazar las columnas de la BD y que calcen perfecto con tu JavaScript
             $stmt = $pdo->prepare("SELECT 
                                     IDTurno AS IDturno, 
                                     nombreTurno AS nombre, 

@@ -1,12 +1,9 @@
 <?php
-require_once '../config/conexion.php';
-
+require_once __DIR__ . '/../../config/conexion.php';
 class Usuario {
     public static function verificarLogin($nombre_usuario, $password_ingresada) {
         try {
             $pdo = Conexion::conectar();
-            
-            // Aquí está el cambio: Agregamos la palabra "Rol" a la consulta
             $stmt = $pdo->prepare("SELECT IDusuario, nombre_usuario, password_hash, Rol FROM usuarios WHERE nombre_usuario = :nombre_usuario");
             $stmt->bindParam(":nombre_usuario", $nombre_usuario, PDO::PARAM_STR);
             $stmt->execute();
