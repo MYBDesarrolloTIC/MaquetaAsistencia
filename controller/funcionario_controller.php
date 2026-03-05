@@ -21,13 +21,13 @@ try {
             break;
 
         case 'createFuncionario':
-            // Recibe los datos del JS. Omitimos el código de credencial porque no está en BD.
-            Funcionario::crear($data['rut'], $data['nombre'], $data['apellidoP'], $data['apellidoM'], $data['departamento'], $data['turno']);
+            // Ahora recibe 'seccion' en lugar de 'departamento'
+            Funcionario::crear($data['rut'], $data['nombre'], $data['apellidoP'], $data['apellidoM'], $data['seccion'], $data['turno']);
             echo json_encode(['status' => 1, 'message' => 'Funcionario enrolado con éxito.']);
             break;
 
         case 'updateFuncionario':
-            Funcionario::actualizar($data['rut'], $data['nombre'], $data['apellidoP'], $data['apellidoM'], $data['departamento'], $data['turno']);
+            Funcionario::actualizar($data['rut'], $data['nombre'], $data['apellidoP'], $data['apellidoM'], $data['seccion'], $data['turno']);
             echo json_encode(['status' => 1, 'message' => 'Datos actualizados correctamente.']);
             break;
 

@@ -2,9 +2,10 @@
    1. VARIABLES GLOBALES Y BASE
    ========================================= */
 :root {
-    --yb-red: #d9251c;
-    --yb-red-dark: #a81d16; /* Rojo oscuro para efectos Hover */
-    --yb-black: #212529; /* Negro suave/carbón para textos */
+    --yb-red: #d9251c; /* Rojo base */
+    --yb-red-dark: #8b1510; /* Rojo oscuro formal para encabezados */
+    --yb-blue: #1b365d; /* Azul oscuro para menú activo y botones */
+    --yb-black: #212529; /* Negro suave para textos */
 }
 
 body,
@@ -14,7 +15,7 @@ body,
 }
 
 /* =========================================
-   SCROLLBAR PERSONALIZADO (Detalle Rojo)
+   SCROLLBAR PERSONALIZADO
    ========================================= */
 ::-webkit-scrollbar {
     width: 8px;
@@ -32,17 +33,17 @@ body,
 }
 
 /* =========================================
-   2. UTILIDADES Y COLORES INSTITUCIONALES
+   2. UTILIDADES Y COLORES
    ========================================= */
 .text-danger-yb { color: var(--yb-red) !important; }
 .text-black { color: var(--yb-black) !important; }
 .text-muted { color: #6c757d !important; }
 .text-warning-dark { color: #856404 !important; }
 
-/* Clases "blue" neutralizadas a oscuros/rojos para mantener compatibilidad HTML */
-.text-blue-yb { color: var(--yb-black) !important; } 
-.bg-blue-yb-light { background-color: rgba(217, 37, 28, 0.05) !important; } 
-.border-start-blue { border-left: 5px solid var(--yb-black) !important; }
+/* Reemplazo de azules por rojos en utilidades generales (excepto menú/botones) */
+.text-blue-yb { color: var(--yb-red) !important; } 
+.bg-blue-yb-light { background-color: rgba(217, 37, 28, 0.1) !important; } 
+.border-start-blue { border-left: 5px solid var(--yb-red) !important; }
 
 .bg-danger-yb-light { background-color: rgba(217, 37, 28, 0.1) !important; }
 .bg-success-light { background-color: rgba(25, 135, 84, 0.1) !important; }
@@ -64,31 +65,16 @@ body,
     z-index: 1000;
 }
 
-/* RECUADRO SUPERIOR DEL USUARIO (Rojo) */
-.sidebar-header {
-    background-color: var(--yb-red);
-    color: #ffffff;
-    border-bottom: none !important;
-}
-
-.sidebar-header h5,
-.sidebar-header small {
-    color: #ffffff !important;
-}
-
-/* AVATAR DE USUARIO: Fondo blanco, ícono rojo y sombra */
+/* Avatar de usuario plano y formal (como en la foto 2) */
 .user-icon-menu {
-    font-size: 2.8rem; 
+    font-size: 4.5rem; 
     color: var(--yb-red);
-    background-color: #ffffff;
-    width: 75px;
-    height: 75px;
-    display: inline-flex;
+    background-color: transparent;
+    display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    margin-bottom: 0.5rem;
+    margin: 20px auto;
+    line-height: 1;
 }
 
 .sidebar .list-group-item {
@@ -97,32 +83,29 @@ body,
     color: var(--yb-black);
     font-weight: 600;
     background-color: #ffffff;
-    transition: all 0.2s ease;
 }
 
 .sidebar .list-group-item i {
     font-size: 1.2rem;
-    color: #adb5bd; 
+    color: var(--yb-blue); 
     vertical-align: middle;
-    transition: color 0.2s ease;
+    margin-right: 10px;
 }
 
 .sidebar .list-group-item:hover {
     background-color: #eaeff4;
-    color: var(--yb-red);
-}
-.sidebar .list-group-item:hover i {
-    color: var(--yb-red);
 }
 
+/* Detalle activo idéntico a la imagen de referencia */
 .sidebar .list-group-item.active {
-    background-color: rgba(217, 37, 28, 0.1);
-    color: var(--yb-red) !important;
+    background-color: var(--yb-blue) !important;
+    color: #ffffff !important;
     border-left: 6px solid var(--yb-red);
     border-radius: 0;
 }
+
 .sidebar .list-group-item.active i {
-    color: var(--yb-red);
+    color: #ffffff !important;
 }
 
 .sidebar .btn-outline-danger {
@@ -138,13 +121,46 @@ body,
 }
 
 /* =========================================
-   4. VISTA: LOGIN
+   4. ENCABEZADOS DE VISTA (Recuadro Rojo)
+   ========================================= */
+.header-seccion {
+    background-color: var(--yb-red-dark) !important;
+    color: #ffffff;
+    padding: 1.5rem 2rem;
+    border-radius: 6px;
+    border: none !important;
+    margin-bottom: 2rem !important;
+}
+
+.header-seccion h1,
+.header-seccion h2 {
+    color: #ffffff !important;
+    margin-bottom: 0.2rem;
+}
+
+.header-seccion p {
+    color: rgba(255, 255, 255, 0.85) !important;
+    margin-bottom: 0;
+}
+
+.header-seccion .btn {
+    background-color: #ffffff !important;
+    color: var(--yb-red-dark) !important;
+    border: none !important;
+    font-weight: 700;
+}
+
+.header-seccion .btn:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* =========================================
+   5. VISTA: LOGIN
    ========================================= */
 .login-card {
     background-color: #ffffff;
     border: none;
     border-top: 8px solid var(--yb-red);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     position: relative;
 }
@@ -163,28 +179,26 @@ body,
 
 .form-control {
     border: 1px solid #ced4da;
-    transition: all 0.2s ease;
 }
 
 .form-control:focus {
     border-color: var(--yb-red);
-    box-shadow: 0 0 0 0.25rem rgba(217, 37, 28, 0.25);
+    outline: none;
 }
 
+/* Botones genéricos (Usando el azul para contraste como solicitaste) */
 .btn-custom {
-    background-color: var(--yb-red);
+    background-color: var(--yb-blue);
     color: #ffffff !important;
     border: none;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-radius: 6px;
-    transition: all 0.3s ease;
 }
 
 .btn-custom:hover {
-    background-color: var(--yb-red-dark);
-    box-shadow: 0 4px 10px rgba(217, 37, 28, 0.3);
+    background-color: #122643;
 }
 
 .login-card::after {
@@ -202,46 +216,9 @@ body,
 }
 
 /* =========================================
-   5. ENCABEZADOS DE VISTA (Títulos en Rojo)
-   ========================================= */
-.header-seccion {
-    background-color: var(--yb-red) !important;
-    color: #ffffff;
-    padding: 1.5rem 2rem;
-    border-radius: 10px;
-    border: none !important;
-    box-shadow: 0 4px 15px rgba(217, 37, 28, 0.2);
-    margin-bottom: 2rem !important;
-}
-
-.header-seccion h1,
-.header-seccion h2 {
-    color: #ffffff !important;
-}
-
-.header-seccion p {
-    color: rgba(255, 255, 255, 0.85) !important;
-}
-
-/* Para que los botones dentro del encabezado rojo resalten bien */
-.header-seccion .btn {
-    background-color: #ffffff !important;
-    color: var(--yb-red) !important;
-    border: none !important;
-    font-weight: 700;
-}
-
-.header-seccion .btn:hover {
-    background-color: #f8f9fa !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-/* =========================================
    6. VISTA: ASISTENCIA (LISTA Y CALENDARIO)
    ========================================= */
 .funcionario-item {
-    transition: background-color 0.2s;
     border-bottom: 1px solid #dee2e6;
 }
 
@@ -249,7 +226,6 @@ body,
     background-color: #f8f9fa !important;
 }
 
-/* Calendario Simple (1 al 31) */
 .caja-dia {
     width: 42px;
     height: 42px;
@@ -261,63 +237,33 @@ body,
     font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
     border: 2px solid transparent;
 }
 
 .caja-dia:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    background-color: #f8f9fa;
 }
 
-.dia-success { 
-    background-color: rgba(25, 135, 84, 0.15); 
-    color: #198754; 
-    border-color: rgba(25, 135, 84, 0.3); 
-}
-
-.dia-warning { 
-    background-color: rgba(255, 193, 7, 0.2); 
-    color: #997404; 
-    border-color: rgba(255, 193, 7, 0.4); 
-}
-
-.dia-danger { 
-    background-color: rgba(220, 53, 69, 0.12); 
-    color: #dc3545; 
-    border-color: rgba(220, 53, 69, 0.3); 
-}
-
-.dia-empty { 
-    background-color: #f8f9fa; 
-    color: #adb5bd; 
-    border-color: #e9ecef; 
-}
+.dia-success { background-color: rgba(25, 135, 84, 0.15); color: #198754; border-color: rgba(25, 135, 84, 0.3); }
+.dia-warning { background-color: rgba(255, 193, 7, 0.2); color: #997404; border-color: rgba(255, 193, 7, 0.4); }
+.dia-danger { background-color: rgba(220, 53, 69, 0.12); color: #dc3545; border-color: rgba(220, 53, 69, 0.3); }
+.dia-empty { background-color: #f8f9fa; color: #adb5bd; border-color: #e9ecef; }
 
 /* =========================================
    7 Y 10. VISTAS: TARJETAS (TURNOS Y DEPTOS)
    ========================================= */
-.card-dashboard {
-    border-radius: 8px;
-    background-color: #ffffff;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid #dee2e6;
-}
-
+.card-dashboard,
 .card-turno,
 .card-depto {
-    border-radius: 10px;
+    border-radius: 8px;
+    background-color: #ffffff;
     border: 1px solid #dee2e6;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-/* ANIMACIÓN HOVER: Sombra y borde rojizo para todas las tarjetas */
 .card-turno:hover,
 .card-depto:hover,
 .card-dashboard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(217, 37, 28, 0.15) !important; /* Sombra roja sutil */
-    border-color: rgba(217, 37, 28, 0.3) !important; /* Borde se tiñe de rojo */
+    border-color: rgba(217, 37, 28, 0.5) !important;
 }
 
 .icon-shape {
@@ -336,7 +282,7 @@ body,
 .icon-depto {
     width: 50px;
     height: 50px;
-    border-radius: 10px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -348,9 +294,10 @@ body,
     color: var(--yb-red); 
 }
 
+/* Se eliminó el azul en los turnos para evitar colores no deseados */
 .turno-dia .icon-turno { background-color: rgba(255, 193, 7, 0.15); color: #d39e00; }
 .turno-noche .icon-turno { background-color: #f1f3f5; color: var(--yb-black); } 
-.turno-especial .icon-turno { background-color: rgba(25, 135, 84, 0.1); color: #198754; }
+.turno-especial .icon-turno { background-color: rgba(217, 37, 28, 0.1); color: var(--yb-red); }
 
 /* =========================================
    8. VISTA: ENROLAR FUNCIONARIO
@@ -358,23 +305,11 @@ body,
 .scan-zone {
     border: 2px dashed #ced4da;
     background-color: #f8f9fa;
-    transition: all 0.3s;
 }
 
 .scan-zone.active {
     border-color: var(--yb-red);
     background-color: rgba(217, 37, 28, 0.05);
-    box-shadow: 0 0 15px rgba(217, 37, 28, 0.2);
-}
-
-.icon-pulse {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.1); opacity: 0.7; }
-    100% { transform: scale(1); opacity: 1; }
 }
 
 /* =========================================
@@ -383,7 +318,6 @@ body,
 #reloj-digital {
     font-family: 'Courier New', Courier, monospace;
     letter-spacing: -2px;
-    text-shadow: 2px 2px 4px rgba(217, 37, 28, 0.15); 
 }
 
 .navbar {
@@ -393,14 +327,12 @@ body,
 #codigo_tarjeta {
     border: 2px dashed #ced4da;
     background-color: #f8f9fa;
-    transition: all 0.3s ease;
     caret-color: transparent; 
 }
 
 #codigo_tarjeta:focus {
     border: 2px solid var(--yb-red);
     background-color: #ffffff;
-    box-shadow: 0 0 20px rgba(217, 37, 28, 0.15);
     outline: none;
 }
 

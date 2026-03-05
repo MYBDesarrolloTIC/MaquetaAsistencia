@@ -127,24 +127,61 @@ const apiFuncionarios = {
         });
     }
 };
-
 /* =========================================================================
    API: ASISTENCIA (Para el Escáner y el Calendario)
    ========================================================================= */
 const apiAsistencia = {
     baseUrl: '../../controller/asistencia_controller.php',
 
-    // Para la VistaAsistencia.php (Cargar el mes de un funcionario)
+    // Para la VistaAsistencia.php (Cargar el mes de un funcionario en el calendario)
     obtenerAsistenciaMes: async (rut, mes, anio) => {
         return await procesarPeticion(`${apiAsistencia.baseUrl}?action=getAsistencia&rut=${rut}&mes=${mes}&anio=${anio}`, { method: 'GET' });
     },
 
-    // Para la VistaEscaner.php (Cuando el láser dispara el RUT)
-    registrarMarca: async (rut) => {
+    // Para la VistaEscaner.php (Cuando la pistola lee el código de barras y selecciona Entrada/Salida)
+    registrarMarca: async (codigoLector, tipoSeleccionado) => {
         return await procesarPeticion(apiAsistencia.baseUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'registrarMarca', rut: rut })
+            body: JSON.stringify({ 
+                action: 'registrarMarca', 
+                codigo: codigoLector, 
+                tipo: tipoSeleccionado 
+            })
+        });
+    }
+};
+/* =========================================================================
+   API: GESTIÓN DE SECCIONES
+   ========================================================================= */
+const apiSecciones = {
+    baseUrl: '../../controller/seccion_controller.php',
+
+    getSecciones: async () => {
+        return await procesarPeticion(`${apiSecciones.baseUrl}?action=getSecciones`, { method: 'GET' });
+    },
+
+    createSeccion: async (nombre) => {
+        return await procesarPeticion(apiSecciones.baseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'createSeccion', nombre: nombre })
+        });
+    },
+
+    updateSeccion: async (id, nombre) => {
+        return await procesarPeticion(apiSecciones.baseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'updateSeccion', id: id, nombre: nombre })
+        });
+    },
+
+    deleteSeccion: async (id) => {
+        return await procesarPeticion(apiSecciones.baseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'deleteSeccion', id: id })
         });
     }
 };

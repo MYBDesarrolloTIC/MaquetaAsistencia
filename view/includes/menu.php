@@ -22,14 +22,18 @@
                 <a href="VistaAsistencia.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-clock-history me-2"></i> Control Asistencia
                 </a>
-                <a href="VistaDepartamento.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-building me-2"></i> Departamentos
+                <a href="VistaSecciones.php" class="list-group-item list-group-item-action">
+                    <i class="bi bi-building me-2"></i> Secciones
                 </a>
                 <a href="VistaTurno.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-calendar-check me-2"></i> Turnos
                 </a>
                 <a href="VistaEnrolar.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-person-plus-fill me-2"></i> Enrolar
+                </a>
+                </a>
+                <a href="VistaUsuario.php" class="list-group-item list-group-item-action">
+                    <i class="bi bi-person-plus-fill me-2"></i> Usuarios
                 </a>
                 <a href="VistaEscaner.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-building me-2"></i> Escaner
