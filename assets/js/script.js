@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectSeccion = document.getElementById('enrolar_seccion');
     if (selectTurno) cargarSelectTurnosEnrolar();
     if (selectSeccion) cargarSelectSeccionesEnrolar();
+    /* Aca tenemos para el control de usuarios */
+    if (document.getElementById('tabla-usuarios')) cargarListaUsuarios();
     
     // --- LÓGICA DE LOGIN ---
     const formLogin = document.getElementById("form_login");
@@ -922,3 +924,162 @@ function ejecutarBorrarUsuario() {
     })
     .catch(error => console.error("Error:", error));
 }
+
+/* =========================================================================
+   MÓDULO 8: GESTIÓN DE USUARIOS (Solo Superadmin)
+   ========================================================================= */
+
+async function cargarListaUsuarios() {
+    const tbody = document.getElementById('tabla-usuarios');
+    if (!tbody) return;
+
+    const res = await apiUsuarios.getUsuarios();
+    tbody.innerHTML = '';
+
+    if (res.status === 1 && res.data && res.data.length > 0) {
+        res.data.forEach(u => {
+            const badgeEstado = u.estado === 'Activo' ? 'bg-success' : 'bg-danger';
+            const badgeRol = u.rol === 'superadmin' ? 'bg-dark' : 'bg-secondary';
+            
+            tbody.innerHTML += `
+            <tr>
+                <td class="ps-4 fw-bold text-black">${u.nombre}</td>
+                <td><span class="text-muted"><i class="bi bi-person me-1"></i>${u.login}</span></td>
+                <td><span class="badge ${badgeRol}">${u.rol}</span></td>
+                <td><span class="badge ${badgeEstado}">${u.estado}</span></td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="editarUsuario(${u.id}, '${u.nombre}', '${u.login}', '${u.rol}', '${u.estado}')">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="abrirModalBorrarUsuario(${u.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+        });
+    } else {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No se encontraron usuarios.</td></tr>';
+    }
+}
+
+function abrirModalUsuario() {
+    document.getElementById('formUsuario').reset();
+    document.getElementById('usuario_id').value = '';
+    document.getElementById('textoTituloModal').innerText = 'Registrar Nuevo Usuario';
+    document.getElementById('hint-password').style.display = 'none'; // Escondemos el mensaje de "dejar en blanco"
+    const modal = new bootstrap.Modal(document.getElementById('modalFormUsuario'));
+    modal.show();
+}
+
+function editarUsuario(id, nombre, login, rol, estado) {
+    document.getElementById('usuario_id').value = id;
+    document.getElementById('usuario_nombre').value = nombre;
+    document.getElementById('usuario_login').value = login;
+    document.getElementById('usuario_rol').value = rol;
+    document.getElementById('usuario_estado').value = estado;
+    document.getElementById('usuario_password').value = ''; // Siempre vacío por seguridad
+    
+    document.getElementById('textoTituloModal').innerText = 'Editar Usuario';
+    document.getElementById('hint-password').style.display = 'inline'; // Mostramos el mensaje de "dejar en blanco"
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalFormUsuario'));
+    modal.show();
+}
+
+async function guardarUsuario() {
+    const id = document.getElementById('usuario_id').value;
+    const datos = {
+        nombre: document.getElementById('usuario_nombre').value.trim(),
+        login: document.getElementById('usuario_login').value.trim(),
+        password: document.getElementById('usuario_password').value,
+        rol: document.getElementById('usuario_rol').value,
+        estado: document.getElementById('usuario_estado').value
+    };
+
+    if (!datos.nombre || !datos.login) {
+        alert("El nombre y el login son obligatorios.");
+        return;
+    }
+
+    let res;
+    if (id) {
+        datos.id = id;
+        res = await apiUsuarios.updateUsuario(datos);
+    } else {
+        res = await apiUsuarios.createUsuario(datos);
+    }
+
+    if (res.status === 1) {
+        bootstrap.Modal.getInstance(document.getElementById('modalFormUsuario')).hide();
+        cargarListaUsuarios();
+    } else {
+        alert(res.message);
+    }
+}
+
+function abrirModalBorrarUsuario(id) {
+    document.getElementById('delete_usuario_id').value = id;
+    const modal = new bootstrap.Modal(document.getElementById('modalBorrarUsuario'));
+    modal.show();
+}
+
+async function ejecutarBorrarUsuario() {
+    const id = document.getElementById('delete_usuario_id').value;
+    if (!id) return;
+
+    const res = await apiUsuarios.deleteUsuario(id);
+    if (res.status === 1) {
+        bootstrap.Modal.getInstance(document.getElementById('modalBorrarUsuario')).hide();
+        cargarListaUsuarios();
+    } else {
+        alert(res.message);
+    }
+}
+
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Dentro de tu script.js, en la función que carga los turnos
+if (contTurnosTest) {
+    contTurnosTest.innerHTML += html;
+}
+//enter crear weas
+document.addEventListener('DOMContentLoaded', () => {
+
+    // 1. Escuchar 'Enter' en el formulario de TURNOS
+    const formTurno = document.getElementById('formTurno');
+    if (formTurno) {
+        formTurno.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Evita que la página parpadee o se recargue
+                guardarTurno();         // Llama a tu función de guardado
+            }
+        });
+    }
+
+    // 2. Escuchar 'Enter' en el formulario de SECCIONES
+    const formSeccion = document.getElementById('formSeccion');
+    if (formSeccion) {
+        formSeccion.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                guardarSeccion(); 
+            }
+        });
+    }
+
+    // 3. Escuchar 'Enter' en el formulario de ENROLAMIENTO
+    const formEnrolar = document.getElementById('form-enrolar');
+    if (formEnrolar) {
+        formEnrolar.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                guardarNuevoFuncionario();
+            }
+        });
+    }
+
+});
+
+
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------

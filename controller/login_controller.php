@@ -15,7 +15,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
 // =========================================================================
 // 2. INICIAR SESIÓN (Si recibe datos por POST desde tu JS)
 // =========================================================================
-header('Content-Type: application/json'); 
+header('Content-Type: application/json; charset=utf-8'); 
 
 $json_input = file_get_contents('php://input');
 $data = json_decode($json_input, true);
@@ -30,17 +30,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $data) {
         exit();
     }
 
-    $usuarioValido = Usuario::verificarLogin($nombre_usuario, $contra);
+    // CORRECCIÓN 1: La función real en tu clase es validarLogin
+    $usuarioValido = Usuario::validarLogin($nombre_usuario, $contra);
 
     if ($usuarioValido) {
-        $_SESSION['IDusuario'] = $usuarioValido['IDusuario'];
-        $_SESSION['nombre_usuario'] = $usuarioValido['nombre_usuario']; 
-        $_SESSION['rol'] = $usuarioValido['Rol']; 
+        // CORRECCIÓN 2: Los nombres exactos de las columnas en tu BD
+        $_SESSION['id_usuario'] = $usuarioValido['id'];
+        $_SESSION['nombre']     = $usuarioValido['nombre']; 
+        $_SESSION['rol']        = $usuarioValido['rol']; 
         
         echo json_encode([
             'status' => 1, 
             'message' => 'Login exitoso', 
-            'rol' => $usuarioValido['Rol'] 
+            'rol' => $usuarioValido['rol'] 
         ]);
         exit();
     } else {

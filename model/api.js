@@ -3,21 +3,20 @@
    ========================================================================= */
 const API_REQUEST_FAIL = 0;
 const API_REQUEST_SUCCESS = 1;
-
 /* =========================================================================
    API: LOGIN Y AUTENTICACIÓN
    ========================================================================= */
 const validUser = async (username, password) => {
     if (username.trim().length > 0) {
-        if (password.length >= 8) {
+        if (password.length > 0) { // CORRECCIÓN 3: Dejar pasar cualquier largo de clave al backend
             const request = await fetch("../../controller/login_controller.php", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    username: encodeURIComponent(username),
-                    password: encodeURIComponent(password),
+                    username: username, // Sin encodeURIComponent, el JSON ya protege los datos
+                    password: password
                 })
             });
 
@@ -28,12 +27,12 @@ const validUser = async (username, password) => {
                 data: await request.json(),
             };
         } else {
-            return { status: API_REQUEST_FAIL, message: "La contraseña es demasiado corta" };
+            return { status: API_REQUEST_FAIL, message: "La contraseña no puede estar vacía" };
         }
     } else {
         return { status: API_REQUEST_FAIL, message: "El usuario está en blanco" };
     }
-};
+};  
 
 /* =========================================================================
    FUNCIÓN CAZADORA DE ERRORES (Reutilizable para todos los módulos)
@@ -184,4 +183,28 @@ const apiSecciones = {
             body: JSON.stringify({ action: 'deleteSeccion', id: id })
         });
     }
+};
+/* 
+-------------------------------------------------------------
+        api Gestion Usuarios
+------------------------------------------------------------- */
+const apiUsuarios = {
+    baseUrl: '../../controller/usuario_controller.php',
+
+    getUsuarios: async () => await procesarPeticion(`${apiUsuarios.baseUrl}?action=getUsuarios`, { method: 'GET' }),
+    
+    createUsuario: async (datos) => await procesarPeticion(apiUsuarios.baseUrl, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'createUsuario', ...datos })
+    }),
+    
+    updateUsuario: async (datos) => await procesarPeticion(apiUsuarios.baseUrl, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateUsuario', ...datos })
+    }),
+    
+    deleteUsuario: async (id) => await procesarPeticion(apiUsuarios.baseUrl, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deleteUsuario', id: id })
+    })
 };

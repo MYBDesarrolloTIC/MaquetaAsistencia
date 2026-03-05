@@ -32,9 +32,11 @@
                     <i class="bi bi-person-plus-fill me-2"></i> Enrolar
                 </a>
                 </a>
-                <a href="VistaUsuario.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-person-plus-fill me-2"></i> Usuarios
-                </a>
+                <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'superadmin'): ?>
+                    <a href="VistaUsuario.php" class="nav-link">
+                        <i class="bi bi-people"></i> Usuarios
+                    </a>
+                <?php endif; ?>
                 <a href="VistaEscaner.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-building me-2"></i> Escaner
                 </a>

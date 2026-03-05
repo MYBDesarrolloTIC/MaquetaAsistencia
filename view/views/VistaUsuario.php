@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'superadmin') {
+    header("Location: VistaInicio.php");
+    exit();
+}
+?>
 <?php include '../includes/header.php'; ?>
 
 <main class="main-content flex-grow-1 p-4 p-md-5 overflow-auto">
