@@ -1,60 +1,73 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Asistencia - Municipalidad de Yerbas Buenas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/css/style.css">
-</head>
-<body>
-    <div class="d-flex h-100 vh-100">
+<?php
+// Obtenemos el nombre del archivo actual para saber qué botón marcar como activo
+$pagina_actual = basename($_SERVER['PHP_SELF']);
 
-        <nav class="sidebar bg-white border-end d-flex flex-column">
+// Obtenemos los datos del usuario de la sesión
+$nombre_usuario = $_SESSION['nombre_usuario'] ?? 'Usuario';
+$rol_usuario    = $_SESSION['rol'] ?? 'Operador';
+?>
 
-            <div class="text-center p-4 border-bottom">
-                <i class="bi bi-person-circle user-icon-menu fs-1 text-primary"></i>
-                <h5 class="mt-3 text-black fw-bold mb-0">Administrador</h5>
-                <small class="text-muted">Mun. Yerbas Buenas</small>
-            </div>
-            
-            <div class="list-group list-group-flush flex-grow-1 mt-2">
-                <a href="VistaAsistencia.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-clock-history me-2"></i> Control Asistencia
-                </a>
-                
-                <a href="VistaSecciones.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-building me-2"></i> Secciones
-                </a>
-                
-                <a href="VistaTurno.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-calendar-check me-2"></i> Turnos
-                </a>
-                
-                <a href="VistaEnrolar.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-person-plus-fill me-2"></i> Enrolar
-                </a>
-                
-                <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'superadmin'): ?>
-                    <a href="VistaUsuario.php" class="list-group-item list-group-item-action">
-                        <i class="bi bi-people-fill me-2"></i> Usuarios
-                    </a>
-                <?php endif; ?>
-                
-                <a href="VistaEscaner.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-upc-scan me-2"></i> Escáner
-                </a>
-            </div>
-            
-            <div class="p-3 border-top">
-                <a href="../../controller/login_controller.php?action=logout" class="btn btn-outline-danger w-100 fw-bold">
-                <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
-                </a>
-            </div>
-            
-        </nav>
+<aside class="sidebar-yb bg-white shadow-sm d-flex flex-column h-100" id="sidebarMenu">
+    
+    <div class="sidebar-profile text-center py-4 border-bottom">
+        <i class="bi bi-person-circle" style="font-size: 5.5rem; color: #da291c; line-height: 1;"></i>
+        <h5 class="fw-bold mt-3 mb-0 text-black text-capitalize"><?php echo htmlspecialchars($nombre_usuario); ?></h5>
+        <small class="text-muted text-capitalize"><?php echo htmlspecialchars($rol_usuario); ?></small>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+    <nav class="sidebar-nav flex-grow-1 mt-2 overflow-auto">
+        <ul class="nav flex-column mb-0 w-100">
+            
+            <li class="nav-item w-100">
+                <a href="VistaInicio.php" class="nav-link-yb <?php echo ($pagina_actual == 'VistaInicio.php') ? 'active' : ''; ?>">
+                    <i class="bi bi-house-door"></i> Inicio
+                </a>
+            </li>
+            
+            <li class="nav-item w-100">
+                <a href="VistaAsistencia.php" class="nav-link-yb <?php echo ($pagina_actual == 'VistaAsistencia.php') ? 'active' : ''; ?>">
+                    <i class="bi bi-clock-history"></i> Control Asistencia
+                </a>
+            </li>
+            
+            <li class="nav-item w-100">
+                <a href="VistaEnrolar.php" class="nav-link-yb <?php echo ($pagina_actual == 'VistaFuncionarios.php' || $pagina_actual == 'VistaEnrolar.php') ? 'active' : ''; ?>">
+                    <i class="bi bi-people"></i> Enrolar
+                </a>
+            </li>
+            
+            <li class="nav-item w-100">
+                <a href="VistaTurno.php" class="nav-link-yb <?php echo ($pagina_actual == 'VistaTurno.php') ? 'active' : ''; ?>">
+                    <i class="bi bi-calendar-check"></i> Turnos
+                </a>
+            </li>
+
+            <li class="nav-item w-100">
+                <a href="VistaSecciones.php" class="nav-link-yb <?php echo ($pagina_actual == 'VistaSecciones.php') ? 'active' : ''; ?>">
+                    <i class="bi bi-building"></i> Secciones
+                </a>
+            </li>
+
+            <?php if (strtolower($rol_usuario) === 'superadmin' || strtolower($rol_usuario) === 'administrador'): ?>
+            <li class="nav-item w-100">
+                <a href="VistaUsuario.php" class="nav-link-yb <?php echo ($pagina_actual == 'VistaUsuario.php') ? 'active' : ''; ?>">
+                    <i class="bi bi-person-badge"></i> Usuarios
+                </a>
+            </li>
+            <?php endif; ?>
+            
+            <li class="nav-item w-100">
+                <a href="VistaEscaner.php" class="nav-link-yb <?php echo ($pagina_actual == 'VistaEscaner.php') ? 'active' : ''; ?>">
+                    <i class="bi bi-upc-scan"></i> Escáner
+                </a>
+            </li>
+            
+        </ul>
+    </nav>
+
+    <div class="sidebar-footer p-4 border-top">
+        <a href="../../controller/login_controller.php?action=logout" class="btn-logout-yb">
+            <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
+        </a>
+    </div>
+</aside>

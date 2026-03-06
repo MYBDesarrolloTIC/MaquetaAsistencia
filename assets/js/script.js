@@ -20,6 +20,13 @@ let seccionABorrarId = null;
    ========================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- LÓGICA DEL DASHBOARD DE INICIO ---
+    // (Asegúrate de que esto esté AQUÍ DENTRO)
+    if (document.getElementById('dash-total-func')) {
+        cargarEstadisticasDashboard();
+    }
+
+    // ... el resto de tu código de inicialización (Login, Enrolar, etc.) ...
     // --- LÓGICA DE LOGIN ---
     const formLogin = document.getElementById("form_login");
     if (formLogin) {
@@ -1083,5 +1090,32 @@ async function ejecutarBorrarUsuario() {
         cargarListaUsuarios();
     } else {
         alert(res.message);
+    }
+}
+
+/* =========================================================================
+   MÓDULO: DASHBOARD INICIO
+   ========================================================================= */
+async function cargarEstadisticasDashboard() {
+    try {
+        const res = await apiDashboard.getStats();
+
+        if (res.status === 1 && res.data) {
+            const spanTotal = document.getElementById('dash-total-func');
+            const spanPresentes = document.getElementById('dash-presentes');
+            const spanAtrasos = document.getElementById('dash-atrasos');
+            const spanLicencias = document.getElementById('dash-licencias');
+
+            // Usamos innerHTML para reemplazar el spinner de carga por el número final
+            if (spanTotal) spanTotal.innerHTML = res.data.total_funcionarios;
+            if (spanPresentes) spanPresentes.innerHTML = res.data.presentes_hoy;
+            if (spanAtrasos) spanAtrasos.innerHTML = res.data.atrasos_hoy;
+            if (spanLicencias) spanLicencias.innerHTML = res.data.licencias_activas;
+        } else {
+            console.warn("⚠️ Error del servidor al cargar dashboard:", res.message);
+            mostrarNotificacion("Error al cargar estadísticas", "warning");
+        }
+    } catch (error) {
+        console.error("💥 Error crítico al cargar dashboard:", error);
     }
 }

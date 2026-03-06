@@ -1,13 +1,16 @@
+
 <?php include '../includes/header.php'; ?>
 
-<div class="header-seccion d-flex justify-content-between align-items-center mb-4">
+<div class="header-seccion">
     <div>
-        <h1 class="fs-3 fw-bold mb-1">Gestión de Turnos</h1>
-        <p class="mb-0 fs-6">Administra los horarios de jornada laboral del personal.</p>
+        <h1>Gestión de Turnos</h1>
+        <p>Administra los horarios de jornada laboral del personal.</p>
     </div>
-    <button class="btn btn-light shadow-sm" onclick="abrirModalTurno()">
-        <i class="bi bi-plus-circle me-2"></i> Nuevo Turno
-    </button>
+    <div>
+        <button class="btn btn-light shadow-sm fs-5 px-4" onclick="abrirModalTurno()">
+            <i class="bi bi-plus-circle me-2"></i> Nuevo Turno
+        </button>
+    </div>
 </div>
 
 <div class="row g-4" id="contenedor-turnos"></div>
@@ -75,5 +78,4 @@
     </div>
 </div>
 
-<script src="../../assets/js/script.js"></script>
 <?php include '../includes/footer.php'; ?>

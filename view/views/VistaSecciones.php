@@ -1,32 +1,26 @@
+
 <?php include '../includes/header.php'; ?>
 
-<div class="d-flex h-100 vh-100">
-    <main class="main-content flex-grow-1 p-4 p-md-5 overflow-auto">
-        
-        <div class="header-seccion d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="fs-3 fw-bold mb-1">Gestión de Secciones</h1>
-                <p class="mb-0 fs-6">Administra las distintas direcciones y áreas municipales.</p>
-            </div>
-            <div>
-                <button class="btn btn-light shadow-sm" onclick="abrirModalNuevaSeccion()">
-                    <i class="bi bi-plus-circle me-2"></i> Nueva Sección
-                </button>
-            </div>
-        </div>
-
-        <div class="row g-4" id="contenedor-secciones">
-            </div>
-
-    </main>
+<div class="header-seccion">
+    <div>
+        <h1>Gestión de Secciones</h1>
+        <p>Administra las distintas direcciones y áreas municipales.</p>
+    </div>
+    <div>
+        <button class="btn btn-light shadow-sm fs-5 px-4" onclick="abrirModalNuevaSeccion()">
+            <i class="bi bi-plus-circle me-2"></i> Nueva Sección
+        </button>
+    </div>
 </div>
+
+<div class="row g-4" id="contenedor-secciones"></div>
 
 <div class="modal fade" id="modalFormSeccion" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-light border-bottom-0">
                 <h5 class="modal-title fw-bold text-black" id="tituloModalSeccion">
-                    <i class="bi bi-building-add me-2 text-danger-yb"></i> Formulario de Sección
+                    <i class="bi bi-building-add me-2 text-danger-yb">wqyteuq</i> Formulario de Sección
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -69,3 +63,4 @@
 </div>
 
 <?php include '../includes/footer.php'; ?>
+

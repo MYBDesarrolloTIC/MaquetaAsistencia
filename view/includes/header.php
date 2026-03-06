@@ -1,6 +1,10 @@
 <?php
-session_start();
+// 1. EL SEGURO DE SESIÓN: Solo inicia la sesión si no hay una activa previamente
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
+// Validación de seguridad para expulsar a quienes no estén logueados
 if (!isset($_SESSION['rol'])) {
     header("Location: ../view/views/VistaLogin.php");
     exit();
@@ -17,9 +21,9 @@ if (!isset($_SESSION['rol'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
-<body class="bg-main-content">
+<body>
     <div class="d-flex h-100 vh-100">
         
         <?php include 'menu.php'; ?>
 
-        <main class="main-content flex-grow-1 p-4 p-md-5 overflow-auto w-100">
+        <main class="main-content">

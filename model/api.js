@@ -208,3 +208,13 @@ const apiUsuarios = {
         body: JSON.stringify({ action: 'deleteUsuario', id: id })
     })
 };
+/* =========================================================================
+   API: DASHBOARD (Panel de Inicio)
+   ========================================================================= */
+const apiDashboard = {
+    baseUrl: '../../controller/dashboard_controller.php',
+
+    getStats: async () => {
+        return await procesarPeticion(`${apiDashboard.baseUrl}?action=getStats`, { method: 'GET' });
+    }
+};

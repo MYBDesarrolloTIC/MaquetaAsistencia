@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,34 +9,54 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100 bg-light">
+<body class="login-bg d-flex align-items-center justify-content-center vh-100">
+
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-12 col-sm-8 col-md-6 col-lg-4">
-                <div class="card shadow p-4 border-0 border-top-danger-yb">
-                    <div class="text-center mb-3">
-                        <i class="bi bi-building text-primary" style="font-size: 3rem;"></i>
+            <div class="col-11 col-sm-9 col-md-7 col-lg-4">
+                
+                <div class="card login-card shadow-lg p-4 p-md-5 border-0">
+                    
+                    <div class="text-center mb-4">
+                        <div class="user-icon-wrapper shadow-sm mx-auto mb-3">
+                            <i class="bi bi-person-circle text-danger-yb"></i>
+                        </div>
+                        <h3 class="fw-bold text-black mb-1">Acceso al Sistema</h3>
+                        <p class="text-muted small">I. Municipalidad de Yerbas Buenas</p>
                     </div>
 
-                    <div id="alertaError" class="alert alert-danger d-none text-center p-2 mb-3"></div>
+                    <div id="alertaError" class="alert alert-danger d-none text-center p-2 mb-4 fw-bold small"></div>
 
-                    <form id="form_login" onsubmit="event.preventDefault();">
-                        <h3 class="text-center fw-bold mb-4">Iniciar Sesión</h3>
+                    <form id="form_login">
+                        
                         <div class="mb-3">
-                            <label for="usuario" class="form-label fw-semibold">Usuario:</label>
-                            <input type="text" id="usuario" name="usuario" class="form-control" required>
+                            <label for="usuario" class="form-label fw-bold small text-muted text-uppercase">Usuario</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">
+                                    <i class="bi bi-person-fill"></i>
+                                </span>
+                                <input type="text" id="usuario" name="usuario" class="form-control bg-light border-start-0 ps-0" placeholder="Ingrese su usuario" required>
+                            </div>
                         </div>
+
                         <div class="mb-4">
-                            <label for="password" class="form-label fw-semibold">Contraseña:</label>
-                            <input type="password" id="password" name="password" class="form-control" required>
+                            <label for="password" class="form-label fw-bold small text-muted text-uppercase">Contraseña</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">
+                                    <i class="bi bi-lock-fill"></i>
+                                </span>
+                                <input type="password" id="password" name="password" class="form-control bg-light border-start-0 ps-0" placeholder="••••••••" required>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Entrar</button>
+
+                        <button type="submit" class="btn btn-custom w-100 py-3 fw-bold shadow-sm">
+                            <i class="bi bi-box-arrow-in-right me-2"></i> INICIAR SESIÓN
+                        </button>
+
                     </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script src="../../model/api.js?v=1"></script>
+
+                </div></div></div></div><script src="../../model/api.js?v=1"></script>
     <script src="../../assets/js/script.js?v=1"></script>
 </body>
 </html>
+
