@@ -19,7 +19,7 @@ let seccionABorrarId = null;
    2. INICIALIZACIÓN DEL DOCUMENTO (DOM Ready Unificado)
    ========================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     // --- LÓGICA DE LOGIN ---
     const formLogin = document.getElementById("form_login");
     if (formLogin) {
@@ -31,20 +31,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectSeccion = document.getElementById('enrolar_seccion');
     if (selectTurno) cargarSelectTurnosEnrolar();
     if (selectSeccion) cargarSelectSeccionesEnrolar();
-    
+
     const formEnrolar = document.getElementById('form-enrolar');
     if (formEnrolar) {
-        formEnrolar.addEventListener('keydown', function(event) {
+        formEnrolar.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 guardarNuevoFuncionario();
             }
         });
     }
-    
+
     // --- LÓGICA DE USUARIOS ---
     if (document.getElementById('tabla-usuarios')) cargarListaUsuarios();
-    
+
     // --- LÓGICA DE TURNOS ---
     const formModalEl = document.getElementById('modalFormTurno');
     if (formModalEl) modalFormTurnoInstance = new bootstrap.Modal(formModalEl);
@@ -60,21 +60,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const contenedorTurnos = document.getElementById('contenedor-turnos');
-    if(contenedorTurnos) cargarTarjetasTurnos();
+    if (contenedorTurnos) cargarTarjetasTurnos();
 
     const formTurno = document.getElementById('formTurno');
     if (formTurno) {
-        formTurno.addEventListener('keydown', function(event) {
+        formTurno.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
-                event.preventDefault(); 
-                guardarTurno();        
+                event.preventDefault();
+                guardarTurno();
             }
         });
     }
 
     // --- LÓGICA DE FUNCIONARIOS (LISTA) ---
     const contenedorFuncionarios = document.getElementById('contenedor-funcionarios');
-    if(contenedorFuncionarios) cargarListaFuncionarios();
+    if (contenedorFuncionarios) cargarListaFuncionarios();
 
     // --- LÓGICA DE ASISTENCIA Y CALENDARIO ---
     const calendarioSimple = document.getElementById("calendario-simple-1");
@@ -82,14 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE SECCIONES (LISTA) ---
     const contenedorSecciones = document.getElementById('contenedor-secciones');
-    if(contenedorSecciones) cargarListaSecciones();
+    if (contenedorSecciones) cargarListaSecciones();
 
     const formSeccion = document.getElementById('formSeccion');
     if (formSeccion) {
-        formSeccion.addEventListener('keydown', function(event) {
+        formSeccion.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
-                event.preventDefault(); 
-                guardarSeccion(); 
+                event.preventDefault();
+                guardarSeccion();
             }
         });
     }
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function procesarLogin(e) {
     e.preventDefault();
     console.log("✅ 1. El botón Entrar reaccionó.");
-    
+
     const userVal = document.getElementById("usuario").value.trim();
     const passVal = document.getElementById("password").value;
     console.log("✅ 2. Datos capturados - Usuario:", userVal, " | Clave:", passVal ? "***" : "vacía");
@@ -115,19 +115,17 @@ async function procesarLogin(e) {
         if (vuser.status === 1 && vuser.data && vuser.data.status === 1) {
             const rolUsuario = String(vuser.data.rol || '').toLowerCase().trim();
             console.log("🚀 5. ¡Login Exitoso! Redirigiendo según rol:", rolUsuario);
-            
-            // Redirección
+
             if (rolUsuario === 'superadmin' || rolUsuario === 'admin') {
                 window.location.href = "VistaInicio.php";
             } else {
                 window.location.href = "VistaEscaner.php";
             }
         } else {
-            // Mostrar error en pantalla
             const alerta = document.getElementById("alertaError");
             const mensajeFallo = vuser.data ? vuser.data.message : (vuser.message || "Error desconocido");
             console.warn("❌ 5. Falló el Login:", mensajeFallo);
-            
+
             if (alerta) {
                 alerta.classList.remove('d-none');
                 alerta.innerText = mensajeFallo;
@@ -148,9 +146,9 @@ async function procesarLogin(e) {
 async function cargarTarjetasTurnos() {
     const contenedor = document.getElementById('contenedor-turnos');
     if (!contenedor) return;
-    
+
     const respuesta = await apiTurnos.getTurnos();
-    contenedor.innerHTML = ''; 
+    contenedor.innerHTML = '';
 
     if (respuesta.status === 1 && respuesta.data && respuesta.data.length > 0) {
         respuesta.data.forEach(turno => {
@@ -174,11 +172,11 @@ async function cargarTarjetasTurnos() {
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <small class="text-muted fw-bold d-block">Entrada</small>
-                                    <span class="fs-5 fw-bold" style="color: var(--yb-blue);">${turno.hora_entrada.substring(0,5)} hrs</span>
+                                    <span class="fs-5 fw-bold" style="color: var(--yb-blue);">${turno.hora_entrada.substring(0, 5)} hrs</span>
                                 </div>
                                 <div class="col-6">
                                     <small class="text-muted fw-bold d-block">Salida</small>
-                                    <span class="fs-5 fw-bold" style="color: var(--yb-blue);">${turno.hora_salida.substring(0,5)} hrs</span>
+                                    <span class="fs-5 fw-bold" style="color: var(--yb-blue);">${turno.hora_salida.substring(0, 5)} hrs</span>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded mb-3">
@@ -221,11 +219,11 @@ function abrirModalTurno() {
 function editarTurno(id, nombre, entrada, salida) {
     document.getElementById('turno_id').value = id;
     document.getElementById('turno_nombre').value = nombre;
-    document.getElementById('turno_entrada').value = entrada.substring(0, 5); 
+    document.getElementById('turno_entrada').value = entrada.substring(0, 5);
     document.getElementById('turno_salida').value = salida.substring(0, 5);
 
     document.getElementById('tituloModalTurno').innerHTML = '<i class="bi bi-pencil-square me-2"></i> Editar Turno';
-    calcularTiempoJornadaFormulario(); 
+    calcularTiempoJornadaFormulario();
     modalFormTurnoInstance.show();
 }
 
@@ -254,7 +252,7 @@ async function guardarTurno() {
         modalFormTurnoInstance.hide();
         cargarTarjetasTurnos();
     } else {
-        alert("Error: " + respuesta.message); 
+        alert("Error: " + respuesta.message);
     }
 }
 
@@ -292,7 +290,7 @@ function calcularHorasUI(entradaVal, salidaVal) {
     let fechaSalida = new Date(`2000-01-01T${salidaVal}`);
 
     if (fechaSalida < fechaEntrada) {
-        fechaSalida.setDate(fechaSalida.getDate() + 1); 
+        fechaSalida.setDate(fechaSalida.getDate() + 1);
     }
 
     const diferenciaMs = fechaSalida - fechaEntrada;
@@ -308,7 +306,7 @@ function calcularHorasUI(entradaVal, salidaVal) {
    ========================================================================= */
 function generarCodigoAutomatico() {
     const rutInput = document.getElementById('enrolar_rut');
-    if (!rutInput) return; // Seguro de página
+    if (!rutInput) return;
 
     const inputCodigo = document.getElementById('enrolar_codigo');
     const svgBarcode = document.getElementById('barcode');
@@ -316,29 +314,29 @@ function generarCodigoAutomatico() {
 
     if (rutInput.value.trim() === '') {
         inputCodigo.value = '';
-        inputCodigo.dataset.sufijo = ''; 
+        inputCodigo.dataset.sufijo = '';
         svgBarcode.style.display = 'none';
         placeholder.style.display = 'block';
         return;
     }
 
     let rutLimpio = rutInput.value.replace(/[^0-9kK]/gi, '');
-    
+
     if (rutLimpio.length > 2) {
         if (!inputCodigo.dataset.sufijo) {
             inputCodigo.dataset.sufijo = Math.floor(10000 + Math.random() * 90000);
         }
-        
+
         let codigoFinal = rutLimpio + inputCodigo.dataset.sufijo;
         inputCodigo.value = codigoFinal;
 
         if (typeof JsBarcode !== 'undefined') {
             JsBarcode("#barcode", codigoFinal, {
                 format: "CODE128",
-                lineColor: "#212529", 
+                lineColor: "#212529",
                 width: 2,
                 height: 70,
-                displayValue: false, 
+                displayValue: false,
                 margin: 0
             });
         }
@@ -362,14 +360,14 @@ async function guardarNuevoFuncionario() {
         return;
     }
 
-    const datos = { rut, nombre: nombres, apellidoP: ap_paterno, apellidoM: ap_materno, seccion, turno, codigo };
+    const datos = { rut, nombre: nombres, apellidoP: ap_paterno, apellidoM: ap_materno, seccion, turno, codigo_tarjeta: codigo };
     const respuesta = await apiFuncionarios.createFuncionario(datos);
 
     if (respuesta.status === 1) {
         alert(respuesta.message);
         document.getElementById('form-enrolar').reset();
         document.getElementById('enrolar_codigo').value = '';
-        document.getElementById('enrolar_codigo').dataset.sufijo = ''; 
+        document.getElementById('enrolar_codigo').dataset.sufijo = '';
         document.getElementById('barcode-placeholder').style.display = 'block';
         document.getElementById('barcode').style.display = 'none';
     } else {
@@ -379,14 +377,14 @@ async function guardarNuevoFuncionario() {
 
 async function cargarSelectTurnosEnrolar() {
     const select = document.getElementById('enrolar_turno');
-    if (!select) return; 
+    if (!select) return;
 
     const respuesta = await apiTurnos.getTurnos();
-    
+
     if (respuesta.status === 1 && respuesta.data && respuesta.data.length > 0) {
         select.innerHTML = '<option value="" selected disabled>Seleccione un turno...</option>';
         respuesta.data.forEach(turno => {
-            select.innerHTML += `<option value="${turno.IDturno}">${turno.nombre} (${turno.hora_entrada.substring(0,5)} a ${turno.hora_salida.substring(0,5)})</option>`;
+            select.innerHTML += `<option value="${turno.IDturno}">${turno.nombre} (${turno.hora_entrada.substring(0, 5)} a ${turno.hora_salida.substring(0, 5)})</option>`;
         });
     } else {
         select.innerHTML = '<option value="" selected disabled>No hay turnos creados</option>';
@@ -395,10 +393,10 @@ async function cargarSelectTurnosEnrolar() {
 
 async function cargarSelectSeccionesEnrolar() {
     const select = document.getElementById('enrolar_seccion');
-    if (!select) return; 
+    if (!select) return;
 
     const respuesta = await apiSecciones.getSecciones();
-    
+
     if (respuesta.status === 1 && respuesta.data && respuesta.data.length > 0) {
         select.innerHTML = '<option value="" selected disabled>Seleccione una sección...</option>';
         respuesta.data.forEach(sec => {
@@ -413,25 +411,24 @@ async function cargarSelectSeccionesEnrolar() {
 /* =========================================================================
    MÓDULO 4: FUNCIONARIOS Y ASISTENCIA (CRUD Y CALENDARIO)
 ========================================================================= */
-
 async function cargarListaFuncionarios() {
     const contenedor = document.getElementById('contenedor-funcionarios');
-    if(!contenedor) return;
+    if (!contenedor) return;
 
     const res = await apiFuncionarios.getFuncionarios();
     const resSecciones = await apiSecciones.getSecciones();
     const resTurnos = await apiTurnos.getTurnos();
-    
+
     contenedor.innerHTML = '';
 
-    if(res.status === 1 && res.data && res.data.length > 0) {
+    if (res.status === 1 && res.data && res.data.length > 0) {
         res.data.forEach(f => {
-            const safeId = f.rut.replace(/[^a-zA-Z0-9]/g, ''); 
+            const safeId = f.rut.replace(/[^a-zA-Z0-9]/g, '');
             const colId = `edit-func-${safeId}`;
-            
+
             const textoSeccion = f.nombre_seccion || 'Sin Sección';
             const textoTurno = f.nombre_turno || 'Sin Turno';
-            
+
             let opcionesSecciones = `<option value="">Seleccione...</option>`;
             if (resSecciones.status === 1) {
                 resSecciones.data.forEach(s => {
@@ -439,7 +436,7 @@ async function cargarListaFuncionarios() {
                     opcionesSecciones += `<option value="${s.id}" ${sel}>${s.nombre}</option>`;
                 });
             }
-            
+
             let opcionesTurnos = `<option value="">Seleccione...</option>`;
             if (resTurnos.status === 1) {
                 resTurnos.data.forEach(t => {
@@ -542,9 +539,11 @@ async function cargarListaFuncionarios() {
     }
 }
 
-function abrirPanelFuncionario(safeId, rutReal, modo, event) {
+/* =========================================================================
+   NUEVO CALENDARIO DINÁMICO (Conexión a BD y Cálculos)
+   ========================================================================= */
+async function abrirPanelFuncionario(safeId, rutReal, modo, event) {
     if (event) event.stopPropagation();
-    
     const formCol = document.getElementById(`col-form-${safeId}`);
     const calCol = document.getElementById(`col-cal-${safeId}`);
     const collapseEl = document.getElementById(`edit-func-${safeId}`);
@@ -554,26 +553,147 @@ function abrirPanelFuncionario(safeId, rutReal, modo, event) {
         calCol.className = 'col-12 ps-md-0';
     } else {
         formCol.style.display = 'block';
-        calCol.className = 'col-md-7 ps-md-4 border-start'; 
+        calCol.className = 'col-md-7 ps-md-4 border-start';
     }
 
-    dibujarCalendarioSimple(safeId, rutReal, fechaActualVisualizacion);
-    
+    // Pedimos los datos y luego dibujamos
+    await cargarDatosYDibujarCalendario(safeId, rutReal, fechaActualVisualizacion);
+
     const bsCollapse = bootstrap.Collapse.getInstance(collapseEl) || new bootstrap.Collapse(collapseEl, { toggle: false });
     bsCollapse.show();
 }
 
 function cerrarPanelFuncionario(safeId, event) {
     if (event) event.stopPropagation();
-    const collapseEl = document.getElementById(`edit-func-${safeId}`);
-    const bsCollapse = bootstrap.Collapse.getInstance(collapseEl);
+    const bsCollapse = bootstrap.Collapse.getInstance(document.getElementById(`edit-func-${safeId}`));
     if (bsCollapse) bsCollapse.hide();
 }
 
-function cambiarMes(direccion, safeId, rutReal) {
+async function cambiarMes(direccion, safeId, rutReal) {
     fechaActualVisualizacion.setMonth(fechaActualVisualizacion.getMonth() + direccion);
-    dibujarCalendarioSimple(safeId, rutReal, fechaActualVisualizacion);
+    await cargarDatosYDibujarCalendario(safeId, rutReal, fechaActualVisualizacion);
 }
+
+async function cargarDatosYDibujarCalendario(safeId, rutReal, fecha) {
+    const año = fecha.getFullYear();
+    const mes = fecha.getMonth() + 1; 
+    
+    const contenedor = document.getElementById(`calendario-simple-${safeId}`);
+    if (contenedor) contenedor.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted fw-bold">Calculando horas...</p></div>';
+
+    try {
+        const req = await fetch(`../../controller/asistencia_controller.php?action=getAsistencia&rut=${rutReal}&mes=${mes}&anio=${año}`);
+        const res = await req.json();
+        
+        console.log("📡 Datos del mes devueltos por PHP:", res);
+        
+        const datosMes = res.status === 1 ? res.data : {};
+        dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes);
+    } catch(e) {
+        console.error("❌ Error JS al cargar Calendario:", e);
+        dibujarCalendarioSimple(safeId, rutReal, fecha, {}); 
+    }
+}
+
+function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
+    const año = fecha.getFullYear();
+    const mes = fecha.getMonth();
+
+    const mesAnioElemento = document.getElementById(`mes-anio-${safeId}`);
+    if (mesAnioElemento) mesAnioElemento.innerText = `${nombresMeses[mes]} ${año}`;
+
+    const contenedor = document.getElementById(`calendario-simple-${safeId}`);
+    if (!contenedor) return;
+
+    const totalDiasMes = new Date(año, mes + 1, 0).getDate();
+    const primerDiaSemana = new Date(año, mes, 1).getDay();
+
+    let totalMinutosMes = 0;
+
+    let htmlCalendario = `
+        <div class="d-grid text-center text-muted fw-bold small mb-1" style="grid-template-columns: repeat(7, 1fr);">
+            <div class="py-1">Do</div><div class="py-1">Lu</div><div class="py-1">Ma</div><div class="py-1">Mi</div>
+            <div class="py-1">Ju</div><div class="py-1">Vi</div><div class="py-1">Sá</div>
+        </div>
+        <div class="d-grid bg-white shadow-sm rounded" style="grid-template-columns: repeat(7, 1fr); border-top: 1px solid #dee2e6; border-left: 1px solid #dee2e6; overflow: hidden;">
+    `;
+
+    // Días vacíos previos
+    for (let i = 0; i < primerDiaSemana; i++) {
+        htmlCalendario += `<div class="bg-light" style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; min-height: 120px;"></div>`;
+    }
+
+    // Dibujo de días reales
+    for (let dia = 1; dia <= totalDiasMes; dia++) {
+        const infoDia = datosMes[dia]; // Buscamos si hay datos de PHP para este día
+
+        let bgClass = 'bg-light text-secondary'; // Gris por defecto (Sin marcas)
+        let contenidoCelda = `<div class="fw-bold text-end p-2">${dia}</div>`; // Solo el número
+
+        // Si hay registro de asistencia ese día
+        if (infoDia) {
+            // Evaluamos el color devuelto por PHP
+            bgClass = infoDia.estado === 'verde' ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-25 text-dark';
+
+            // Sumamos al contador mensual
+            totalMinutosMes += infoDia.minutos_totales || 0;
+
+            // Etiqueta de hora extra si existe
+            let badgeExtra = '';
+            if (infoDia.extra !== '00:00') {
+                let colorExtra = infoDia.tipo_extra === 'Nocturna' ? 'bg-dark' : 'bg-primary';
+                badgeExtra = `<div class="mt-1"><span class="badge ${colorExtra} w-100" style="font-size:0.65rem;">+${infoDia.extra} h (${infoDia.tipo_extra})</span></div>`;
+            }
+
+            // Armamos la tarjeta con todos los datos
+            contenidoCelda = `
+                <div class="p-2 w-100 d-flex flex-column h-100" style="font-size: 0.75rem;">
+                    <div class="fw-bold text-end mb-1 fs-6">${dia}</div>
+                    <div class="d-flex justify-content-between text-muted fw-bold"><span>Ent:</span> <span class="text-black">${infoDia.entrada}</span></div>
+                    <div class="d-flex justify-content-between text-muted fw-bold"><span>Sal:</span> <span class="text-black">${infoDia.salida}</span></div>
+                    <div class="mt-auto border-top border-secondary pt-1 d-flex justify-content-between fw-bold">
+                        <span>Trabajado:</span> <span>${infoDia.trabajado}</span>
+                    </div>
+                    ${badgeExtra}
+                </div>
+            `;
+        }
+
+        htmlCalendario += `
+            <div class="${bgClass}" 
+                 style="min-height: 120px; border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; transition: background 0.2s;" 
+                 title="Día ${dia}"
+                 onmouseover="this.classList.add('shadow-inner')" 
+                 onmouseout="this.classList.remove('shadow-inner')">
+                ${contenidoCelda}
+            </div>
+        `;
+    }
+
+    // Cuadros sobrantes al final
+    let casillasTotales = primerDiaSemana + totalDiasMes;
+    let casillasSobrantes = (7 - (casillasTotales % 7)) % 7;
+    for (let i = 0; i < casillasSobrantes; i++) {
+        htmlCalendario += `<div class="bg-light" style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; min-height: 120px;"></div>`;
+    }
+    htmlCalendario += `</div>`;
+
+    // Transformamos los minutos totales a formato HH:MM
+    let totalHrs = Math.floor(totalMinutosMes / 60);
+    let totalMins = totalMinutosMes % 60;
+
+    // Agregamos el resumen al final del calendario
+    htmlCalendario += `
+        <div class="alert alert-secondary mt-3 d-flex justify-content-between align-items-center fw-bold shadow-sm border-0">
+            <span><i class="bi bi-clock-history me-2"></i>Total Horas Trabajadas en ${nombresMeses[mes]}:</span>
+            <span class="fs-5 text-primary">${totalHrs} hrs ${totalMins} mins</span>
+        </div>
+    `;
+
+    contenedor.innerHTML = htmlCalendario;
+}
+
+
 
 async function guardarEdicionFuncionario(rut) {
     const datos = {
@@ -586,7 +706,7 @@ async function guardarEdicionFuncionario(rut) {
     };
 
     const res = await apiFuncionarios.updateFuncionario(datos);
-    if(res.status === 1) {
+    if (res.status === 1) {
         alert("Funcionario actualizado con éxito.");
         cargarListaFuncionarios();
     } else {
@@ -596,93 +716,19 @@ async function guardarEdicionFuncionario(rut) {
 
 function confirmarBorradoFuncionario(rut) {
     funcionarioAborrarId = rut;
-    seccionABorrarId = null; 
+    seccionABorrarId = null;
     const modal = new bootstrap.Modal(document.getElementById('modalBorrar'));
     modal.show();
 }
 
-function cambiarMes(direccion, idFuncionario) {
-    fechaActualVisualizacion.setMonth(fechaActualVisualizacion.getMonth() + direccion);
-    dibujarCalendarioSimple(idFuncionario, fechaActualVisualizacion);
-}
-
-function dibujarCalendarioSimple(safeId, rutReal, fecha) {
-    const año = fecha.getFullYear();
-    const mes = fecha.getMonth();
-    
-    const mesAnioElemento = document.getElementById(`mes-anio-${safeId}`);
-    if (mesAnioElemento) mesAnioElemento.innerText = `${nombresMeses[mes]} ${año}`;
-    
-    const contenedor = document.getElementById(`calendario-simple-${safeId}`);
-    if (!contenedor) return;
-    
-    const totalDiasMes = new Date(año, mes + 1, 0).getDate();
-    const primerDiaSemana = new Date(año, mes, 1).getDay(); 
-    
-    let htmlCalendario = `
-        <div class="d-grid text-center text-muted fw-bold small mb-1" style="grid-template-columns: repeat(7, 1fr);">
-            <div class="py-1">Do</div><div class="py-1">Lu</div><div class="py-1">Ma</div><div class="py-1">Mi</div>
-            <div class="py-1">Ju</div><div class="py-1">Vi</div><div class="py-1">Sá</div>
-        </div>
-        <div class="d-grid bg-white shadow-sm rounded" style="grid-template-columns: repeat(7, 1fr); border-top: 1px solid #dee2e6; border-left: 1px solid #dee2e6; overflow: hidden;">
-    `;
-    
-    for (let i = 0; i < primerDiaSemana; i++) {
-        htmlCalendario += `<div class="bg-light" style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; aspect-ratio: 1 / 1;"></div>`;
-    }
-    
-    for (let dia = 1; dia <= totalDiasMes; dia++) {
-        let diaDeLaSemana = new Date(año, mes, dia).getDay();
-        
-        let bgClass = 'bg-success bg-opacity-10 text-success fw-bold'; 
-        
-        if (diaDeLaSemana === 0 || diaDeLaSemana === 6) {
-            bgClass = 'bg-light text-secondary'; 
-        } else {
-            if (dia === 12 || dia === 23) bgClass = 'bg-danger bg-opacity-10 text-danger fw-bold'; 
-            if (dia === 8 || dia === 15) bgClass = 'bg-warning bg-opacity-10 text-dark fw-bold';   
-        }
-
-        htmlCalendario += `
-            <div class="${bgClass} d-flex justify-content-center align-items-center" 
-                 style="aspect-ratio: 1 / 1; border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; font-size: 1rem; cursor: pointer; transition: background 0.2s;" 
-                 title="Día ${dia}"
-                 onmouseover="this.classList.add('shadow-inner')" 
-                 onmouseout="this.classList.remove('shadow-inner')">
-                ${dia}
-            </div>
-        `;
-    }
-    
-    let casillasTotales = primerDiaSemana + totalDiasMes;
-    let casillasSobrantes = (7 - (casillasTotales % 7)) % 7;
-    for (let i = 0; i < casillasSobrantes; i++) {
-        htmlCalendario += `<div class="bg-light" style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; aspect-ratio: 1 / 1;"></div>`;
-    }
-    
-    htmlCalendario += `</div>`; 
-    contenedor.innerHTML = htmlCalendario; 
-}
-
-// =========================================================================
-// MÓDULO DE REPORTES (Pendiente conectar con PHP/PDF)
-// =========================================================================
 function generarReporteMensual(rutFuncionario) {
-    const mesActual = fechaActualVisualizacion.getMonth() + 1; // +1 porque Enero es 0
+    const mesActual = fechaActualVisualizacion.getMonth() + 1; 
     const anioActual = fechaActualVisualizacion.getFullYear();
-    const nombreMes = nombresMeses[fechaActualVisualizacion.getMonth()];
-
-    // Por ahora mostramos una alerta confirmando los datos que enviaremos a PHP
-    alert(`¡Función lista para conectar!\n\nSe generará el reporte en PDF para el RUT: ${rutFuncionario}\nPeriodo: ${nombreMes} ${anioActual}`);
     
-    // En el futuro, aquí haremos un window.open() a un archivo PHP 
-    // pasándole el RUT y la fecha por la URL para que imprima el PDF.
-    // Ej: window.open(`../../controller/reporte_controller.php?rut=${rutFuncionario}&mes=${mesActual}&anio=${anioActual}`);
+    const url = `../../controller/reporte_controller.php?rut=${rutFuncionario}&mes=${mesActual}&anio=${anioActual}`;
+    window.open(url, '_blank');
 }
 
-/* =========================================================================
-   MÓDULO 5: SECCIONES (CRUD)
-   ========================================================================= */
 
 async function cargarListaSecciones() {
     const contenedor = document.getElementById('contenedor-secciones');
@@ -769,7 +815,7 @@ function abrirModalNuevaSeccion() {
 
 function confirmarBorrarSeccion(id) {
     seccionABorrarId = id;
-    funcionarioAborrarId = null; 
+    funcionarioAborrarId = null;
     const modal = new bootstrap.Modal(document.getElementById('modalBorrar'));
     modal.show();
 }
@@ -779,26 +825,23 @@ function confirmarBorrarSeccion(id) {
    MÓDULO 6: CARABINERO DE TRÁNSITO (BORRADO UNIFICADO)
    ========================================================================= */
 async function ejecutarBorrado() {
-    
     if (funcionarioAborrarId) {
         const res = await apiFuncionarios.deleteFuncionario(funcionarioAborrarId);
         if (res.status === 1) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalBorrar'));
             modal.hide();
             cargarListaFuncionarios();
-            funcionarioAborrarId = null; 
+            funcionarioAborrarId = null;
         } else {
             alert(res.message);
         }
-    } 
-    
-    else if (seccionABorrarId) {
+    } else if (seccionABorrarId) {
         const res = await apiSecciones.deleteSeccion(seccionABorrarId);
         if (res.status === 1) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalBorrar'));
             modal.hide();
             cargarListaSecciones();
-            seccionABorrarId = null; 
+            seccionABorrarId = null;
         } else {
             alert(res.message);
         }
@@ -811,20 +854,18 @@ async function ejecutarBorrado() {
 function actualizarRelojYFecha() {
     const reloj = document.getElementById('reloj-digital');
     const fechaDiv = document.getElementById('fecha-actual');
-    
-    if (!reloj || !fechaDiv) return; 
+
+    if (!reloj || !fechaDiv) return;
 
     const ahora = new Date();
-    
     const horas = String(ahora.getHours()).padStart(2, '0');
     const minutos = String(ahora.getMinutes()).padStart(2, '0');
     const segundos = String(ahora.getSeconds()).padStart(2, '0');
-    
+
     reloj.textContent = `${horas}:${minutos}:${segundos}`;
-    
+
     const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     let fechaFormateada = ahora.toLocaleDateString('es-ES', opcionesFecha);
-    
     fechaDiv.textContent = fechaFormateada;
 }
 
@@ -832,7 +873,7 @@ if (document.getElementById('reloj-digital')) {
     actualizarRelojYFecha();
     setInterval(actualizarRelojYFecha, 1000);
 
-    document.addEventListener('click', function() {
+    document.addEventListener('click', function () {
         const inputScanner = document.getElementById('codigo_tarjeta');
         if (inputScanner) inputScanner.focus();
     });
@@ -850,8 +891,8 @@ function toggleCamaraEscaner() {
         btn.classList.replace('btn-outline-secondary', 'btn-outline-danger');
 
         html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { fps: 10, qrbox: {width: 350, height: 150}, formatsToSupport: [ Html5QrcodeSupportedFormats.CODE_128 ] }, 
+            "reader",
+            { fps: 10, qrbox: { width: 350, height: 150 }, formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128] },
             false
         );
 
@@ -870,13 +911,13 @@ function toggleCamaraEscaner() {
 function onScanSuccess(decodedText, decodedResult) {
     const inputCodigo = document.getElementById('codigo_tarjeta');
     inputCodigo.value = decodedText;
-    
+
     const formEscaner = document.getElementById('form_marcar_asistencia');
     formEscaner.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
 
     html5QrcodeScanner.pause();
     setTimeout(() => {
-        if(html5QrcodeScanner && html5QrcodeScanner.getState() === Html5QrcodeScannerState.PAUSED){
+        if (html5QrcodeScanner && html5QrcodeScanner.getState() === Html5QrcodeScannerState.PAUSED) {
             html5QrcodeScanner.resume();
         }
     }, 3000);
@@ -889,20 +930,29 @@ function onScanFailure(error) {
 const formEscaner = document.getElementById('form_marcar_asistencia');
 if (formEscaner) {
     formEscaner.addEventListener('submit', async (e) => {
-        e.preventDefault(); 
-        
+        e.preventDefault();
+
         const inputCodigo = document.getElementById('codigo_tarjeta');
         const tipoSeleccionado = document.querySelector('input[name="tipo_marca"]:checked').value;
         const alerta = document.getElementById('alertaAsistencia');
 
         const codigo = inputCodigo.value.trim();
-        if(!codigo) return;
+
+        // ¡AQUÍ ESTÁ LA VALIDACIÓN AGREGADA PARA LA PISTOLA ESCÁNER!
+        if (!codigo) {
+            alert("Por favor, ingrese o escanee un código de credencial válido.");
+            return;
+        }
+        if (codigo.length < 8) {
+            alert("El código es muy corto o inválido. Verifique su credencial.");
+            inputCodigo.value = ''; // Limpiamos el error
+            return;
+        }
 
         alerta.style.display = 'none';
-        
         const res = await apiAsistencia.registrarMarca(codigo, tipoSeleccionado);
-
         alerta.style.display = 'block';
+
         if (res.status === 1) {
             alerta.className = 'alert alert-success fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
             alerta.innerHTML = `<i class="bi bi-check-circle-fill me-2 fs-3 align-middle"></i> ${res.message}`;
@@ -935,7 +985,7 @@ async function cargarListaUsuarios() {
         res.data.forEach(u => {
             let rolBadge = u.rol === 'superadmin' ? 'bg-danger-yb-light text-danger-yb' : 'bg-blue-yb-light text-blue-yb';
             let estadoBadge = u.estado === 'Activo' ? 'bg-success text-white' : 'bg-secondary text-white';
-            
+
             tbody.innerHTML += `
             <tr>
                 <td class="ps-4 py-3 fw-bold text-black">
@@ -964,7 +1014,7 @@ function abrirModalUsuario() {
     document.getElementById('formUsuario').reset();
     document.getElementById('usuario_id').value = '';
     document.getElementById('textoTituloModal').innerText = 'Registrar Nuevo Usuario';
-    document.getElementById('hint-password').style.display = 'none'; 
+    document.getElementById('hint-password').style.display = 'none';
     document.getElementById('usuario_password').required = true;
     const modal = new bootstrap.Modal(document.getElementById('modalFormUsuario'));
     modal.show();
@@ -976,12 +1026,12 @@ function editarUsuario(id, nombre, login, rol, estado) {
     document.getElementById('usuario_login').value = login;
     document.getElementById('usuario_rol').value = rol;
     document.getElementById('usuario_estado').value = estado;
-    document.getElementById('usuario_password').value = ''; 
+    document.getElementById('usuario_password').value = '';
     document.getElementById('usuario_password').required = false;
-    
+
     document.getElementById('textoTituloModal').innerText = 'Editar Usuario';
-    document.getElementById('hint-password').style.display = 'inline'; 
-    
+    document.getElementById('hint-password').style.display = 'inline';
+
     const modal = new bootstrap.Modal(document.getElementById('modalFormUsuario'));
     modal.show();
 }

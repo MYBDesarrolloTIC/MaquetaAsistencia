@@ -5,7 +5,6 @@ class Funcionario {
     public static function obtenerTodos() {
         try {
             $pdo = Conexion::conectar();
-            // ¡Magia SQL! Traemos los datos del funcionario y los cruzamos con las tablas de secciones y turnos
             $sql = "SELECT f.rut, f.nombre, f.apellidoP, f.apellidoM, 
                            f.IDseccion, s.nombre AS nombre_seccion, 
                            f.IDturno, t.nombre AS nombre_turno, f.estado 
@@ -21,13 +20,12 @@ class Funcionario {
         }
     }
 
-    // Cambiamos $idDepartamento por $idSeccion
-    public static function crear($rut, $nombre, $apellidoP, $apellidoM, $idSeccion, $idTurno, $estado = 1) {
+    // ¡AQUÍ ESTÁ LA FUSIÓN! Tu código excelente + el codigo_tarjeta
+    public static function crear($rut, $nombre, $apellidoP, $apellidoM, $idSeccion, $idTurno, $codigo_tarjeta, $estado = 1) {
         try {
             $pdo = Conexion::conectar();
-            // Actualizado a IDseccion
-            $sql = "INSERT INTO funcionarios (rut, nombre, apellidoP, apellidoM, IDseccion, IDturno, estado) 
-                    VALUES (:rut, :nom, :ap, :am, :seccion, :turno, :est)";
+            $sql = "INSERT INTO funcionarios (rut, nombre, apellidoP, apellidoM, IDseccion, IDturno, codigo_tarjeta, estado) 
+                    VALUES (:rut, :nom, :ap, :am, :seccion, :turno, :codigo, :est)";
             
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':rut', $rut);
@@ -36,18 +34,19 @@ class Funcionario {
             $stmt->bindParam(':am', $apellidoM);
             $stmt->bindParam(':seccion', $idSeccion);
             $stmt->bindParam(':turno', $idTurno);
+            $stmt->bindParam(':codigo', $codigo_tarjeta); // Se guarda el código
             $stmt->bindParam(':est', $estado);
             
             return $stmt->execute();
         } catch (PDOException $e) {
             $errorMsg = $e->getMessage();
             
+            // Tus validaciones originales intactas
             if ($e->getCode() == 23000) {
                 if (strpos($errorMsg, 'Duplicate entry') !== false) {
                     throw new Exception("Error: El RUT $rut ya está registrado en el sistema.");
                 } 
                 elseif (strpos($errorMsg, 'foreign key constraint fails') !== false) {
-                    // Actualizado a IDseccion
                     if (strpos($errorMsg, 'IDseccion') !== false) {
                         throw new Exception("Error: La Sección seleccionada no existe en la base de datos.");
                     } elseif (strpos($errorMsg, 'IDturno') !== false) {
@@ -64,7 +63,6 @@ class Funcionario {
     public static function actualizar($rut, $nombre, $apellidoP, $apellidoM, $idSeccion, $idTurno) {
         try {
             $pdo = Conexion::conectar();
-            // Actualizado a IDseccion
             $sql = "UPDATE funcionarios SET nombre = :nom, apellidoP = :ap, apellidoM = :am, IDseccion = :seccion, IDturno = :turno WHERE rut = :rut";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':rut', $rut);

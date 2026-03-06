@@ -13,8 +13,8 @@
             <div class="card-header bg-white border-bottom fw-bold d-flex text-muted py-3">
                 <div class="col-2">RUT</div>
                 <div class="col-3">Nombre Completo</div>
-                <div class="col-2">Depto (ID)</div>
-                <div class="col-2">Turno (ID)</div>
+                <div class="col-2">Seccion</div>
+                <div class="col-2">Turno</div>
                 <div class="col-3 text-center">Acciones</div>
             </div>
             
@@ -40,6 +40,4 @@
         </div>
     </div>
 </div>
-
-<script src="../../assets/js/script.js"></script>
 <?php include '../includes/footer.php'; ?>

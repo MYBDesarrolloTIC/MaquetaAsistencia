@@ -1,7 +1,5 @@
--- Apagamos la validación de llaves foráneas temporalmente para poder resetear
 SET FOREIGN_KEY_CHECKS = 0;
 
--- Borramos las tablas si existen
 DROP TABLE IF EXISTS reportes_historicos;
 DROP TABLE IF EXISTS ausencia_permiso;
 DROP TABLE IF EXISTS asistencia;
@@ -9,19 +7,12 @@ DROP TABLE IF EXISTS funcionarios;
 DROP TABLE IF EXISTS usuarios;
 DROP TABLE IF EXISTS turnos;
 DROP TABLE IF EXISTS secciones;
---esto es para tener base de datos limpia sin errores de tipeo en otros dispositivos
 
--- =======================================================================
--- 1. TABLA: secciones 
--- =======================================================================
 CREATE TABLE secciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- =======================================================================
--- 2. TABLA: turnos 
--- =======================================================================
 CREATE TABLE turnos (
     IDturno INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
@@ -29,9 +20,6 @@ CREATE TABLE turnos (
     hora_salida TIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- =======================================================================
--- 3. TABLA: usuarios (Administradores del sistema)
--- =======================================================================
 CREATE TABLE usuarios (
     IDusuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
@@ -42,11 +30,10 @@ CREATE TABLE usuarios (
 INSERT INTO usuarios (nombre_usuario, password_hash, Rol) 
 VALUES ('jefe_rrhh', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'superadmin');
 
--- =======================================================================
--- 4. TABLA: funcionarios (¡Actualizada para la Ley Chilena!)
--- =======================================================================
+-- TABLA FUNCIONARIOS ACTUALIZADA (Con codigo_tarjeta y tipo_contrato)
 CREATE TABLE funcionarios (
     rut VARCHAR(20) PRIMARY KEY, 
+    codigo_tarjeta VARCHAR(50) NULL UNIQUE, -- Aquí está el código del escáner
     nombre VARCHAR(50) NOT NULL,
     apellidoP VARCHAR(50) NOT NULL,
     apellidoM VARCHAR(50),
@@ -58,9 +45,6 @@ CREATE TABLE funcionarios (
     FOREIGN KEY (IDturno) REFERENCES turnos(IDturno) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- =======================================================================
--- 5. TABLA: asistencia (Reloj Control)
--- =======================================================================
 CREATE TABLE asistencia (
     IDmarca INT AUTO_INCREMENT PRIMARY KEY,
     rut_funcionario VARCHAR(20) NOT NULL,
@@ -70,9 +54,6 @@ CREATE TABLE asistencia (
     FOREIGN KEY (rut_funcionario) REFERENCES funcionarios(rut) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- =======================================================================
--- 6. TABLA: ausencia_permiso (Licencias, Días Administrativos, etc.)
--- =======================================================================
 CREATE TABLE ausencia_permiso (
     idAusencia INT AUTO_INCREMENT PRIMARY KEY,
     rut_funcionario VARCHAR(20) NOT NULL,
@@ -82,9 +63,6 @@ CREATE TABLE ausencia_permiso (
     FOREIGN KEY (rut_funcionario) REFERENCES funcionarios(rut) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- =======================================================================
--- 7. TABLA: reportes_historicos (Acumulador Mensual para Planillas)
--- =======================================================================
 CREATE TABLE reportes_historicos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     mes INT NOT NULL,
@@ -98,37 +76,23 @@ CREATE TABLE reportes_historicos (
     FOREIGN KEY (rut_funcionario) REFERENCES funcionarios(rut) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-
--- =======================================================================
--- PROCEDIMIENTOS ALMACENADOS Y EVENTOS
--- =======================================================================
 DELIMITER $$
-
 CREATE PROCEDURE sp_crear_plantilla_mensual()
 BEGIN
     DECLARE v_mes_actual INT;
     DECLARE v_anio_actual INT;
-
     SET v_mes_actual = MONTH(CURRENT_DATE());
     SET v_anio_actual = YEAR(CURRENT_DATE());
 
-    -- Pre-carga a todos los funcionarios activos en el reporte del mes a cero
-    -- para que PHP vaya sumando las horas diarias allí.
     INSERT INTO reportes_historicos (mes, anio, rut_funcionario)
-    SELECT 
-        v_mes_actual,
-        v_anio_actual,
-        rut
+    SELECT v_mes_actual, v_anio_actual, rut
     FROM funcionarios 
     WHERE estado = 1
     AND NOT EXISTS (
         SELECT 1 FROM reportes_historicos 
-        WHERE mes = v_mes_actual 
-        AND anio = v_anio_actual 
-        AND rut_funcionario = funcionarios.rut
+        WHERE mes = v_mes_actual AND anio = v_anio_actual AND rut_funcionario = funcionarios.rut
     );
 END $$
-
 DELIMITER ;
 
 SET GLOBAL event_scheduler = ON;
@@ -136,13 +100,10 @@ DROP EVENT IF EXISTS ev_apertura_mes;
 
 DELIMITER $$
 CREATE EVENT ev_apertura_mes
-ON SCHEDULE EVERY 1 MONTH
-STARTS '2026-04-01 00:01:00'
-DO
-BEGIN
+ON SCHEDULE EVERY 1 MONTH STARTS '2026-04-01 00:01:00'
+DO BEGIN
     CALL sp_crear_plantilla_mensual();
 END $$
 DELIMITER ;
 
--- Volvemos a encender las alarmas de seguridad
 SET FOREIGN_KEY_CHECKS = 1;
