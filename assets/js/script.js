@@ -20,8 +20,7 @@ let seccionABorrarId = null;
    ========================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- LÓGICA DEL DASHBOARD DE INICIO ---
-    // (Asegúrate de que esto esté AQUÍ DENTRO)
+    // --- LÓGICA DEL PANEL DE INICIO (DASHBOARD) ---
     if (document.getElementById('dash-total-func')) {
         cargarEstadisticasDashboard();
     }
@@ -937,40 +936,51 @@ function onScanFailure(error) {
 const formEscaner = document.getElementById('form_marcar_asistencia');
 if (formEscaner) {
     formEscaner.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
+        e.preventDefault(); 
+        
         const inputCodigo = document.getElementById('codigo_tarjeta');
         const tipoSeleccionado = document.querySelector('input[name="tipo_marca"]:checked').value;
         const alerta = document.getElementById('alertaAsistencia');
 
         const codigo = inputCodigo.value.trim();
-
-        // ¡AQUÍ ESTÁ LA VALIDACIÓN AGREGADA PARA LA PISTOLA ESCÁNER!
+        
         if (!codigo) {
             alert("Por favor, ingrese o escanee un código de credencial válido.");
             return;
         }
         if (codigo.length < 8) {
             alert("El código es muy corto o inválido. Verifique su credencial.");
-            inputCodigo.value = ''; // Limpiamos el error
+            inputCodigo.value = ''; 
             return;
         }
 
         alerta.style.display = 'none';
-        const res = await apiAsistencia.registrarMarca(codigo, tipoSeleccionado);
-        alerta.style.display = 'block';
+        
+        try {
+            const req = await fetch('../../controller/asistencia_controller.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'registrarMarca', codigo: codigo, tipo: tipoSeleccionado })
+            });
+            const res = await req.json();
 
-        if (res.status === 1) {
-            alerta.className = 'alert alert-success fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
-            alerta.innerHTML = `<i class="bi bi-check-circle-fill me-2 fs-3 align-middle"></i> ${res.message}`;
-        } else {
+            alerta.style.display = 'block';
+            if (res.status === 1) {
+                alerta.className = 'alert alert-success fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
+                alerta.innerHTML = `<i class="bi bi-check-circle-fill me-2 fs-3 align-middle"></i> ${res.message}`;
+            } else {
+                alerta.className = 'alert alert-danger fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
+                alerta.innerHTML = `<i class="bi bi-x-circle-fill me-2 fs-3 align-middle"></i> ${res.message}`;
+            }
+        } catch(error) {
+            console.error("Error al registrar:", error);
+            alerta.style.display = 'block';
             alerta.className = 'alert alert-danger fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
-            alerta.innerHTML = `<i class="bi bi-x-circle-fill me-2 fs-3 align-middle"></i> ${res.message}`;
+            alerta.innerHTML = `<i class="bi bi-x-circle-fill me-2 fs-3 align-middle"></i> Error de conexión con el servidor.`;
         }
 
         inputCodigo.value = '';
         inputCodigo.focus();
-
         setTimeout(() => { alerta.style.display = 'none'; }, 4000);
     });
 }
@@ -1094,28 +1104,34 @@ async function ejecutarBorrarUsuario() {
 }
 
 /* =========================================================================
-   MÓDULO: DASHBOARD INICIO
+   MÓDULO 9: PANEL DE INICIO (DASHBOARD)
    ========================================================================= */
 async function cargarEstadisticasDashboard() {
     try {
-        const res = await apiDashboard.getStats();
+        // Pedimos los datos al nuevo controlador
+        const req = await fetch('../../controller/dashboard_controller.php?action=getStats');
+        const res = await req.json();
 
-        if (res.status === 1 && res.data) {
-            const spanTotal = document.getElementById('dash-total-func');
-            const spanPresentes = document.getElementById('dash-presentes');
-            const spanAtrasos = document.getElementById('dash-atrasos');
-            const spanLicencias = document.getElementById('dash-licencias');
-
-            // Usamos innerHTML para reemplazar el spinner de carga por el número final
-            if (spanTotal) spanTotal.innerHTML = res.data.total_funcionarios;
-            if (spanPresentes) spanPresentes.innerHTML = res.data.presentes_hoy;
-            if (spanAtrasos) spanAtrasos.innerHTML = res.data.atrasos_hoy;
-            if (spanLicencias) spanLicencias.innerHTML = res.data.licencias_activas;
+        if (res.status === 1) {
+            // Reemplazamos los spinners por los números reales
+            document.getElementById('dash-total-func').innerHTML = res.data.total_funcionarios;
+            document.getElementById('dash-presentes').innerHTML = res.data.presentes_hoy;
+            document.getElementById('dash-atrasos').innerHTML = res.data.atrasos_hoy;
+            document.getElementById('dash-licencias').innerHTML = res.data.licencias_activas;
         } else {
-            console.warn("⚠️ Error del servidor al cargar dashboard:", res.message);
-            mostrarNotificacion("Error al cargar estadísticas", "warning");
+            console.error("Error al cargar estadísticas:", res.message);
+            mostrarCerosDashboard();
         }
     } catch (error) {
-        console.error("💥 Error crítico al cargar dashboard:", error);
+        console.error("Error de conexión con el Dashboard:", error);
+        mostrarCerosDashboard();
     }
+}
+
+// Función de respaldo por si el servidor falla
+function mostrarCerosDashboard() {
+    document.getElementById('dash-total-func').innerHTML = '0';
+    document.getElementById('dash-presentes').innerHTML = '0';
+    document.getElementById('dash-atrasos').innerHTML = '0';
+    document.getElementById('dash-licencias').innerHTML = '0';
 }

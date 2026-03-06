@@ -35,7 +35,7 @@
             </div>
             <div class="modal-footer border-0 bg-light justify-content-center">
                 <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger fw-bold px-4" id="btn-confirmar-borrar">Sí, Eliminar</button>
+                <button type="button" class="btn btn-danger fw-bold px-4" id="btn-confirmar-borrar" onclick="ejecutarBorrado()">Sí, Eliminar</button>
             </div>
         </div>
     </div>

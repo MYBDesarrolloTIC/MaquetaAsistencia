@@ -45,8 +45,14 @@ try {
             break;
 
         case 'deleteFuncionario':
-            Funcionario::eliminar($data['rut']);
-            echo json_encode(['status' => 1, 'message' => 'Funcionario eliminado del sistema.']);
+            $rutAEliminar = $data['rut'] ?? $data['id'] ?? '';
+            
+            if (!empty($rutAEliminar)) {
+                Funcionario::eliminar($rutAEliminar);
+                echo json_encode(['status' => 1, 'message' => 'Funcionario eliminado del sistema.']);
+            } else {
+                echo json_encode(['status' => 0, 'message' => 'Error: No se recibió el RUT para eliminar.']);
+            }
             break;
 
         default:
