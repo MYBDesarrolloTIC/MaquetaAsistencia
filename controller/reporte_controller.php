@@ -30,63 +30,95 @@ try {
     die("Error de Base de Datos: " . $e->getMessage());
 }
 
-// 3. Calculamos la asistencia usando la misma clase del calendario
+// 3. Calculamos la asistencia 
 $datosMes = Asistencia::obtenerAsistenciaMes($rut, $mes, $anio);
-
-// Nombres de los meses para el título
 $nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 $nombreMesStr = $nombresMeses[$mes - 1];
 
-// Calculamos los totales
-$totalMinutosMes = 0;
+// 4. Lógica de Separación de Horas (Diurnas vs Nocturnas)
+$minutos_ordinarios = 0;
+$minutos_extra_diurnas = 0;
+$minutos_extra_nocturnas = 0;
+
 foreach ($datosMes as $dia => $info) {
-    $totalMinutosMes += $info['minutos_totales'];
+    if ($info['estado'] !== 'gris') {
+        // Convertir el string de extra "HH:MM" a minutos totales
+        $partes_extra = explode(':', $info['extra']);
+        $extra_mins = (int)$partes_extra[0] * 60 + (int)$partes_extra[1];
+
+        // Separar minutos ordinarios
+        $min_trabajados = $info['minutos_totales'];
+        $min_ordinarios_dia = $min_trabajados - $extra_mins;
+        if ($min_ordinarios_dia < 0) $min_ordinarios_dia = 0;
+
+        $minutos_ordinarios += $min_ordinarios_dia;
+
+        // Clasificar las horas extras
+        if ($info['tipo_extra'] === 'Diurna') {
+            $minutos_extra_diurnas += $extra_mins;
+        } elseif ($info['tipo_extra'] === 'Nocturna') {
+            $minutos_extra_nocturnas += $extra_mins;
+        }
+    }
 }
-$totalHoras = floor($totalMinutosMes / 60);
-$totalMin = $totalMinutosMes % 60;
-$totalFormateado = str_pad($totalHoras, 2, '0', STR_PAD_LEFT) . ':' . str_pad($totalMin, 2, '0', STR_PAD_LEFT);
+
+// Función para formatear minutos a "HH:MM hrs"
+function formatoHoras($minutos_totales) {
+    if ($minutos_totales == 0) return "00:00";
+    $horas = floor($minutos_totales / 60);
+    $minutos = $minutos_totales % 60;
+    return str_pad($horas, 2, '0', STR_PAD_LEFT) . ':' . str_pad($minutos, 2, '0', STR_PAD_LEFT);
+}
+
+// 5. Generar el nombre del archivo: nombrefuncionario_rutfuncionario_añomes.pdf
+$nombreSinEspacios = str_replace(' ', '', $funcionario['nombre']);
+$mesFormateado = str_pad($mes, 2, '0', STR_PAD_LEFT);
+$nombre_archivo = "{$nombreSinEspacios}_{$rut}_{$anio}{$mesFormateado}.pdf";
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte Asistencia - <?php echo $rut; ?></title>
+    <title>Generando Reporte...</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Estilos específicos para que al imprimir en PDF se vea perfecto */
-        body { font-family: Arial, sans-serif; font-size: 12px; color: #000; background-color: #fff; }
-        .hoja { max-width: 800px; margin: 0 auto; padding: 20px; }
+        body { background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        /* El contenedor que será convertido a PDF */
+        #reporte-pdf { 
+            background-color: white; 
+            width: 800px; 
+            padding: 40px; 
+            font-family: Arial, sans-serif; 
+            font-size: 12px; 
+            color: #000;
+        }
         .cabecera-oficial { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-        .tabla-reporte th { background-color: #f8f9fa !important; font-size: 11px; text-transform: uppercase; }
-        .tabla-reporte td, .tabla-reporte th { padding: 5px 8px; border: 1px solid #dee2e6; }
+        .tabla-reporte th { background-color: #f8f9fa !important; font-size: 11px; text-transform: uppercase; border: 1px solid #dee2e6;}
+        .tabla-reporte td { padding: 5px 8px; border: 1px solid #dee2e6; }
         .firma-box { margin-top: 50px; text-align: center; }
         .linea-firma { border-top: 1px solid #000; width: 250px; margin: 0 auto; margin-top: 60px; padding-top: 5px; font-weight: bold; }
-        
-        /* Oculta cosas innecesarias al imprimir */
-        @media print {
-            @page { margin: 1cm; }
-            body { margin: 0; padding: 0; }
-            .btn-imprimir { display: none !important; }
-        }
+        #pantalla-carga { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
     </style>
 </head>
 <body>
 
-<div class="hoja">
-    <div class="text-end mb-3 btn-imprimir">
-        <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir / Guardar PDF</button>
-        <button class="btn btn-secondary ms-2" onclick="window.close()">Cerrar</button>
-    </div>
+<div id="pantalla-carga">
+    <div class="spinner-border text-danger mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+    <h3 class="text-dark fw-bold">Generando PDF...</h3>
+    <p class="text-muted">La descarga comenzará automáticamente.</p>
+</div>
 
+<div id="reporte-pdf">
     <div class="cabecera-oficial d-flex justify-content-between align-items-center">
         <div>
             <h4 class="mb-0 fw-bold">MUNICIPALIDAD DE YERBAS BUENAS</h4>
             <span class="text-muted">Departamento de Recursos Humanos</span>
         </div>
         <div class="text-end">
-            <h5 class="mb-0">REPORTE DE ASISTENCIA</h5>
-            <span class="fw-bold">PERIODO: <?php echo strtoupper($nombreMesStr) . ' ' . $anio; ?></span>
+            <h5 class="mb-0 fw-bold">REPORTE DE ASISTENCIA</h5>
+            <span>PERIODO: <?php echo strtoupper($nombreMesStr) . ' ' . $anio; ?></span>
         </div>
     </div>
 
@@ -106,10 +138,10 @@ $totalFormateado = str_pad($totalHoras, 2, '0', STR_PAD_LEFT) . ':' . str_pad($t
         <thead>
             <tr>
                 <th>Día</th>
-                <th>Hora Entrada</th>
-                <th>Hora Salida</th>
-                <th>Hrs Trabajadas</th>
-                <th>Hrs Extras</th>
+                <th>Entrada</th>
+                <th>Salida</th>
+                <th>Total Trabajado</th>
+                <th>Horas Extras</th>
                 <th>Tipo Extra</th>
             </tr>
         </thead>
@@ -117,7 +149,6 @@ $totalFormateado = str_pad($totalHoras, 2, '0', STR_PAD_LEFT) . ':' . str_pad($t
             <?php 
             $diasDelMes = cal_days_in_month(CAL_GREGORIAN, $mes, $anio);
             for ($i = 1; $i <= $diasDelMes; $i++) {
-                // Si el día existe en los datos devueltos por la clase
                 if (isset($datosMes[$i])) {
                     $d = $datosMes[$i];
                     echo "<tr>
@@ -129,25 +160,38 @@ $totalFormateado = str_pad($totalHoras, 2, '0', STR_PAD_LEFT) . ':' . str_pad($t
                             <td>{$d['tipo_extra']}</td>
                           </tr>";
                 } else {
-                    // Si no hay marcas, se deja en blanco
                     echo "<tr>
                             <td class='fw-bold text-muted'>$i</td>
-                            <td colspan='5' class='text-muted small'><em>Sin registro de asistencia</em></td>
+                            <td colspan='5' class='text-muted small'><em>Sin registro</em></td>
                           </tr>";
                 }
             }
             ?>
         </tbody>
-        <tfoot class="table-group-divider">
-            <tr>
-                <td colspan="3" class="text-end fw-bold">TOTAL HORAS MENSUALES:</td>
-                <td class="fw-bold fs-6"><?php echo $totalFormateado; ?> hrs</td>
-                <td colspan="2"></td>
-            </tr>
-        </tfoot>
     </table>
 
-    <div class="row mt-5 pt-5">
+    <table class="table table-sm tabla-reporte w-100 mt-4">
+        <tbody>
+            <tr>
+                <td class="text-end fw-bold w-75">TOTAL HORAS ORDINARIAS:</td>
+                <td class="fw-bold fs-6 text-center w-25"><?php echo formatoHoras($minutos_ordinarios); ?> hrs</td>
+            </tr>
+            <tr>
+                <td class="text-end fw-bold">TOTAL EXTRAS DIURNAS (25%):</td>
+                <td class="fw-bold fs-6 text-center text-primary"><?php echo formatoHoras($minutos_extra_diurnas); ?> hrs</td>
+            </tr>
+            <tr>
+                <td class="text-end fw-bold">TOTAL EXTRAS NOCTURNAS / FESTIVAS (50%):</td>
+                <td class="fw-bold fs-6 text-center text-danger"><?php echo formatoHoras($minutos_extra_nocturnas); ?> hrs</td>
+            </tr>
+            <tr class="table-secondary">
+                <td class="text-end fw-bold fs-5">GRAN TOTAL DEL MES:</td>
+                <td class="fw-bold fs-5 text-center"><?php echo formatoHoras($minutos_ordinarios + $minutos_extra_diurnas + $minutos_extra_nocturnas); ?> hrs</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="row mt-5 pt-4">
         <div class="col-6 firma-box">
             <div class="linea-firma">Firma del Funcionario</div>
             <small>Acepta conforme el registro de jornada</small>
@@ -157,10 +201,33 @@ $totalFormateado = str_pad($totalHoras, 2, '0', STR_PAD_LEFT) . ':' . str_pad($t
             <small>V°B° Control de Asistencia</small>
         </div>
     </div>
-
 </div>
 
+<script>
+    window.onload = function() {
+        const elemento = document.getElementById('reporte-pdf');
+        
+        // Configuramos cómo queremos el PDF
+        const opciones = {
+            margin:       10,
+            filename:     '<?php echo $nombre_archivo; ?>',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
+        };
 
+        // Magia: Convertir a PDF y descargar
+        html2pdf().set(opciones).from(elemento).save().then(function() {
+            // Cuando termine de descargar, mostramos un mensaje y cerramos la pestaña
+            document.getElementById('pantalla-carga').innerHTML = `
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                <h3 class="mt-3 text-dark fw-bold">¡Descarga Completada!</h3>
+                <p class="text-muted">El archivo <b><?php echo $nombre_archivo; ?></b> se ha guardado en tus Descargas.</p>
+                <button class="btn btn-outline-secondary mt-3" onclick="window.close()">Cerrar esta pestaña</button>
+            `;
+        });
+    };
+</script>
 
 </body>
 </html>
