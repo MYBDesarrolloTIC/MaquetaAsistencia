@@ -5,11 +5,19 @@ class Funcionario {
     public static function obtenerTodos() {
         try {
             $pdo = Conexion::conectar();
-            $stmt = $pdo->prepare("SELECT * FROM funcionarios ORDER BY nombre ASC");
+            // ¡Magia SQL! Traemos los datos del funcionario y los cruzamos con las tablas de secciones y turnos
+            $sql = "SELECT f.rut, f.nombre, f.apellidoP, f.apellidoM, 
+                           f.IDseccion, s.nombre AS nombre_seccion, 
+                           f.IDturno, t.nombre AS nombre_turno, f.estado 
+                    FROM funcionarios f
+                    LEFT JOIN secciones s ON f.IDseccion = s.id
+                    LEFT JOIN turnos t ON f.IDturno = t.IDturno
+                    ORDER BY f.nombre ASC";
+            $stmt = $pdo->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            throw new Exception("Error al obtener: " . $e->getMessage());
+            throw new Exception("Error al obtener funcionarios: " . $e->getMessage());
         }
     }
 

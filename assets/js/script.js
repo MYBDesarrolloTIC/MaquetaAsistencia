@@ -16,16 +16,9 @@ let seccionABorrarId = null;
 
 
 /* =========================================================================
-   2. INICIALIZACIÓN DEL DOCUMENTO (DOM Ready)
+   2. INICIALIZACIÓN DEL DOCUMENTO (DOM Ready Unificado)
    ========================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-    // --- LÓGICA DE ENROLAMIENTO ---
-    const selectTurno = document.getElementById('enrolar_turno');
-    const selectSeccion = document.getElementById('enrolar_seccion');
-    if (selectTurno) cargarSelectTurnosEnrolar();
-    if (selectSeccion) cargarSelectSeccionesEnrolar();
-    /* Aca tenemos para el control de usuarios */
-    if (document.getElementById('tabla-usuarios')) cargarListaUsuarios();
     
     // --- LÓGICA DE LOGIN ---
     const formLogin = document.getElementById("form_login");
@@ -33,6 +26,25 @@ document.addEventListener('DOMContentLoaded', () => {
         formLogin.addEventListener("submit", procesarLogin);
     }
 
+    // --- LÓGICA DE ENROLAMIENTO ---
+    const selectTurno = document.getElementById('enrolar_turno');
+    const selectSeccion = document.getElementById('enrolar_seccion');
+    if (selectTurno) cargarSelectTurnosEnrolar();
+    if (selectSeccion) cargarSelectSeccionesEnrolar();
+    
+    const formEnrolar = document.getElementById('form-enrolar');
+    if (formEnrolar) {
+        formEnrolar.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                guardarNuevoFuncionario();
+            }
+        });
+    }
+    
+    // --- LÓGICA DE USUARIOS ---
+    if (document.getElementById('tabla-usuarios')) cargarListaUsuarios();
+    
     // --- LÓGICA DE TURNOS ---
     const formModalEl = document.getElementById('modalFormTurno');
     if (formModalEl) modalFormTurnoInstance = new bootstrap.Modal(formModalEl);
@@ -50,6 +62,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const contenedorTurnos = document.getElementById('contenedor-turnos');
     if(contenedorTurnos) cargarTarjetasTurnos();
 
+    const formTurno = document.getElementById('formTurno');
+    if (formTurno) {
+        formTurno.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                guardarTurno();        
+            }
+        });
+    }
+
     // --- LÓGICA DE FUNCIONARIOS (LISTA) ---
     const contenedorFuncionarios = document.getElementById('contenedor-funcionarios');
     if(contenedorFuncionarios) cargarListaFuncionarios();
@@ -61,6 +83,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE SECCIONES (LISTA) ---
     const contenedorSecciones = document.getElementById('contenedor-secciones');
     if(contenedorSecciones) cargarListaSecciones();
+
+    const formSeccion = document.getElementById('formSeccion');
+    if (formSeccion) {
+        formSeccion.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                guardarSeccion(); 
+            }
+        });
+    }
 });
 
 
@@ -69,29 +101,43 @@ document.addEventListener('DOMContentLoaded', () => {
    ========================================================================= */
 async function procesarLogin(e) {
     e.preventDefault();
-    const userVal = document.getElementById("usuario").value;
+    console.log("✅ 1. El botón Entrar reaccionó.");
+    
+    const userVal = document.getElementById("usuario").value.trim();
     const passVal = document.getElementById("password").value;
+    console.log("✅ 2. Datos capturados - Usuario:", userVal, " | Clave:", passVal ? "***" : "vacía");
 
-    const vuser = await validUser(userVal, passVal);
+    try {
+        console.log("⏳ 3. Viajando al servidor (login_controller.php)...");
+        const vuser = await validUser(userVal, passVal);
+        console.log("✅ 4. El servidor respondió esto:", vuser);
 
-    if (vuser.status === API_REQUEST_SUCCESS && vuser.data.status === 1) {
-        const rolUsuario = String(vuser.data.rol || '').toLowerCase().trim();
-
-        if (rolUsuario === 'superadmin' || rolUsuario === 'admin') {
-            window.location.href = "VistaInicio.php";
+        if (vuser.status === 1 && vuser.data && vuser.data.status === 1) {
+            const rolUsuario = String(vuser.data.rol || '').toLowerCase().trim();
+            console.log("🚀 5. ¡Login Exitoso! Redirigiendo según rol:", rolUsuario);
+            
+            // Redirección
+            if (rolUsuario === 'superadmin' || rolUsuario === 'admin') {
+                window.location.href = "VistaInicio.php";
+            } else {
+                window.location.href = "VistaEscaner.php";
+            }
         } else {
-            window.location.href = "VistaEscaner.php";
+            // Mostrar error en pantalla
+            const alerta = document.getElementById("alertaError");
+            const mensajeFallo = vuser.data ? vuser.data.message : (vuser.message || "Error desconocido");
+            console.warn("❌ 5. Falló el Login:", mensajeFallo);
+            
+            if (alerta) {
+                alerta.classList.remove('d-none');
+                alerta.innerText = mensajeFallo;
+            } else {
+                alert("Error: " + mensajeFallo);
+            }
         }
-    } else {
-        const alerta = document.getElementById("alertaError");
-        const mensajeFallo = vuser.data ? vuser.data.message : vuser.message;
-
-        if (alerta) {
-            alerta.classList.remove('d-none');
-            alerta.innerText = mensajeFallo;
-        } else {
-            alert(mensajeFallo);
-        }
+    } catch (error) {
+        console.error("🔥 ERROR CRÍTICO en JavaScript:", error);
+        alert("El sistema chocó, mira la consola para más detalles.");
     }
 }
 
@@ -258,7 +304,7 @@ function calcularHorasUI(entradaVal, salidaVal) {
 
 
 /* =========================================================================
-   MÓDULO 3: ENROLAMIENTO (CÓDIGO DE BARRAS POR COMPAÑERO)
+   MÓDULO 3: ENROLAMIENTO
    ========================================================================= */
 function generarCodigoAutomatico() {
     const rutInput = document.getElementById('enrolar_rut');
@@ -268,44 +314,35 @@ function generarCodigoAutomatico() {
     const svgBarcode = document.getElementById('barcode');
     const placeholder = document.getElementById('barcode-placeholder');
 
-    // Si el campo RUT está vacío, limpiamos todo y volvemos a mostrar el ícono
     if (rutInput.value.trim() === '') {
         inputCodigo.value = '';
-        inputCodigo.dataset.sufijo = ''; // Limpiamos la memoria del sufijo
+        inputCodigo.dataset.sufijo = ''; 
         svgBarcode.style.display = 'none';
         placeholder.style.display = 'block';
         return;
     }
 
-    // Limpiamos el RUT (quitamos puntos y guiones) para usarlo de base
     let rutLimpio = rutInput.value.replace(/[^0-9kK]/gi, '');
     
-    // Solo generamos si ya hay al menos un par de números ingresados
     if (rutLimpio.length > 2) {
-        
-        // Memoria de sufijo: Solo generamos 5 dígitos aleatorios si no los hemos generado antes
         if (!inputCodigo.dataset.sufijo) {
             inputCodigo.dataset.sufijo = Math.floor(10000 + Math.random() * 90000);
         }
         
         let codigoFinal = rutLimpio + inputCodigo.dataset.sufijo;
-
-        // Pasamos el valor al input de abajo
         inputCodigo.value = codigoFinal;
 
-        // Generamos el código de barras con JsBarcode
         if (typeof JsBarcode !== 'undefined') {
             JsBarcode("#barcode", codigoFinal, {
                 format: "CODE128",
-                lineColor: "#212529", // Negro suave
+                lineColor: "#212529", 
                 width: 2,
                 height: 70,
-                displayValue: false, // Ocultamos el número debajo del código de barras
+                displayValue: false, 
                 margin: 0
             });
         }
 
-        // Ocultamos el ícono y mostramos el código de barras generado
         placeholder.style.display = 'none';
         svgBarcode.style.display = 'block';
     }
@@ -332,7 +369,7 @@ async function guardarNuevoFuncionario() {
         alert(respuesta.message);
         document.getElementById('form-enrolar').reset();
         document.getElementById('enrolar_codigo').value = '';
-        document.getElementById('enrolar_codigo').dataset.sufijo = ''; // Reseteamos la memoria del sufijo
+        document.getElementById('enrolar_codigo').dataset.sufijo = ''; 
         document.getElementById('barcode-placeholder').style.display = 'block';
         document.getElementById('barcode').style.display = 'none';
     } else {
@@ -382,32 +419,69 @@ async function cargarListaFuncionarios() {
     if(!contenedor) return;
 
     const res = await apiFuncionarios.getFuncionarios();
+    const resSecciones = await apiSecciones.getSecciones();
+    const resTurnos = await apiTurnos.getTurnos();
+    
     contenedor.innerHTML = '';
 
     if(res.status === 1 && res.data && res.data.length > 0) {
         res.data.forEach(f => {
-            const colId = `edit-func-${f.rut.replace(/[^a-zA-Z0-9]/g, '')}`;
+            const safeId = f.rut.replace(/[^a-zA-Z0-9]/g, ''); 
+            const colId = `edit-func-${safeId}`;
             
+            const textoSeccion = f.nombre_seccion || 'Sin Sección';
+            const textoTurno = f.nombre_turno || 'Sin Turno';
+            
+            let opcionesSecciones = `<option value="">Seleccione...</option>`;
+            if (resSecciones.status === 1) {
+                resSecciones.data.forEach(s => {
+                    const sel = (s.id == f.IDseccion) ? 'selected' : '';
+                    opcionesSecciones += `<option value="${s.id}" ${sel}>${s.nombre}</option>`;
+                });
+            }
+            
+            let opcionesTurnos = `<option value="">Seleccione...</option>`;
+            if (resTurnos.status === 1) {
+                resTurnos.data.forEach(t => {
+                    const sel = (t.IDturno == f.IDturno) ? 'selected' : '';
+                    opcionesTurnos += `<option value="${t.IDturno}" ${sel}>${t.nombre}</option>`;
+                });
+            }
+
             contenedor.innerHTML += `
-            <div class="list-group-item p-0 funcionario-item border-start-blue mb-2 shadow-sm">
-                <div class="d-flex align-items-center py-3 px-3 bg-white fila-visible">
-                    <div class="col-2 fw-semibold">${f.rut}</div>
-                    <div class="col-3 text-black fw-bold">${f.nombre} ${f.apellidoP}</div>
-                    <div class="col-2">${f.IDseccion}</div>
-                    <div class="col-2"><span class="badge bg-dark text-white border">ID Turno: ${f.IDturno}</span></div>
-                    <div class="col-3 text-center">
-                        <button class="btn btn-sm btn-outline-primary me-2 fw-bold" data-bs-toggle="collapse" data-bs-target="#${colId}" onclick="dibujarCalendarioSimple('${f.rut}', fechaActualVisualizacion)">
-                            <i class="bi bi-calendar3"></i> Asistencia / Editar
+            <div class="list-group-item p-0 funcionario-item border-start-blue mb-2 shadow-sm rounded">
+                <div class="d-flex align-items-center py-3 px-3 bg-white fila-visible" 
+                     style="cursor: pointer; transition: 0.2s;" 
+                     onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'calendario', event)"
+                     onmouseover="this.style.backgroundColor='#f8f9fa'" 
+                     onmouseout="this.style.backgroundColor='white'">
+                     
+                    <div class="col-2 fw-semibold text-muted">${f.rut}</div>
+                    <div class="col-3 text-black fw-bold"><i class="bi bi-person-fill me-2 text-primary"></i>${f.nombre} ${f.apellidoP}</div>
+                    <div class="col-2 text-truncate">${textoSeccion}</div>
+                    <div class="col-2"><span class="badge bg-light text-dark border"><i class="bi bi-clock me-1"></i>${textoTurno}</span></div>
+                    
+                    <div class="col-3 text-end pe-2">
+                        <button class="btn btn-sm btn-outline-primary fw-bold bg-white" title="Editar Funcionario"
+                                onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'editar', event)">
+                            <i class="bi bi-pencil-square me-1"></i> Editar
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="confirmarBorradoFuncionario('${f.rut}')">
+                        <button class="btn btn-sm btn-outline-danger ms-1 bg-white" title="Eliminar Funcionario"
+                                onclick="event.stopPropagation(); confirmarBorradoFuncionario('${f.rut}')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </div>
-                <div id="${colId}" class="collapse bg-light border-top border-bottom">
-                    <div class="p-4 row g-4">
-                        <div class="col-md-5 border-end pe-4">
-                            <h5 class="fw-bold mb-3 text-blue-yb"><i class="bi bi-person-lines-fill me-2"></i>Editar Funcionario</h5>
+                
+                <div id="${colId}" class="collapse bg-white border-top">
+                    <div class="d-flex justify-content-end p-2 bg-light border-bottom">
+                        <button type="button" class="btn-close" aria-label="Close" title="Cerrar panel"
+                                onclick="cerrarPanelFuncionario('${safeId}', event)"></button>
+                    </div>
+                    
+                    <div class="row p-4 pt-3 m-0">
+                        <div id="col-form-${safeId}" class="col-md-5 pe-4">
+                            <h5 class="fw-bold mb-3 text-blue-yb"><i class="bi bi-person-vcard me-2"></i>Editar Funcionario</h5>
                             <form>
                                 <div class="mb-3">
                                     <label class="form-label small fw-bold text-muted">Nombres</label>
@@ -425,12 +499,16 @@ async function cargarListaFuncionarios() {
                                 </div>
                                 <div class="row mb-4">
                                     <div class="col">
-                                        <label class="form-label small fw-bold text-muted">ID Sección</label>
-                                        <input type="number" class="form-control" id="edit_depto_${f.rut}" value="${f.IDseccion}">
+                                        <label class="form-label small fw-bold text-muted">Sección</label>
+                                        <select class="form-select" id="edit_depto_${f.rut}">
+                                            ${opcionesSecciones}
+                                        </select>
                                     </div>
                                     <div class="col">
-                                        <label class="form-label small fw-bold text-muted">ID Turno</label>
-                                        <input type="number" class="form-control" id="edit_turno_${f.rut}" value="${f.IDturno}">
+                                        <label class="form-label small fw-bold text-muted">Turno</label>
+                                        <select class="form-select" id="edit_turno_${f.rut}">
+                                            ${opcionesTurnos}
+                                        </select>
                                     </div>
                                 </div>
                                 <button type="button" class="btn btn-success fw-bold w-100 py-2 shadow-sm" onclick="guardarEdicionFuncionario('${f.rut}')">
@@ -438,11 +516,22 @@ async function cargarListaFuncionarios() {
                                 </button>
                             </form>
                         </div>
-                        <div class="col-md-7 ps-4">
+                        
+                        <div id="col-cal-${safeId}" class="col-md-7 ps-md-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="fw-bold mb-0 text-blue-yb"><i class="bi bi-calendar-check me-2"></i>Registro</h5>
+                                <div class="d-flex align-items-center">
+                                    <h5 class="fw-bold mb-0 text-blue-yb"><i class="bi bi-calendar-grid-month me-2"></i>Asistencia</h5>
+                                    <button class="btn btn-sm btn-outline-danger fw-bold ms-3 shadow-sm" title="Descargar Reporte del Mes" onclick="generarReporteMensual('${f.rut}')">
+                                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Reporte
+                                    </button>
+                                </div>
+                                <div class="d-flex align-items-center gap-1">
+                                    <button class="btn btn-sm btn-light border fw-bold" onclick="cambiarMes(-1, '${safeId}', '${f.rut}')"><i class="bi bi-chevron-left"></i></button>
+                                    <span id="mes-anio-${safeId}" class="fw-bold text-uppercase px-2 text-center" style="min-width: 130px; font-size: 0.9rem;"></span>
+                                    <button class="btn btn-sm btn-light border fw-bold" onclick="cambiarMes(1, '${safeId}', '${f.rut}')"><i class="bi bi-chevron-right"></i></button>
+                                </div>
                             </div>
-                            <div class="d-flex flex-wrap gap-2 justify-content-start mb-4" id="calendario-simple-${f.rut}"></div>
+                            <div id="calendario-simple-${safeId}"></div>
                         </div>
                     </div>
                 </div>
@@ -451,6 +540,39 @@ async function cargarListaFuncionarios() {
     } else {
         contenedor.innerHTML = '<div class="alert alert-warning text-center fw-bold">No hay funcionarios registrados.</div>';
     }
+}
+
+function abrirPanelFuncionario(safeId, rutReal, modo, event) {
+    if (event) event.stopPropagation();
+    
+    const formCol = document.getElementById(`col-form-${safeId}`);
+    const calCol = document.getElementById(`col-cal-${safeId}`);
+    const collapseEl = document.getElementById(`edit-func-${safeId}`);
+
+    if (modo === 'calendario') {
+        formCol.style.display = 'none';
+        calCol.className = 'col-12 ps-md-0';
+    } else {
+        formCol.style.display = 'block';
+        calCol.className = 'col-md-7 ps-md-4 border-start'; 
+    }
+
+    dibujarCalendarioSimple(safeId, rutReal, fechaActualVisualizacion);
+    
+    const bsCollapse = bootstrap.Collapse.getInstance(collapseEl) || new bootstrap.Collapse(collapseEl, { toggle: false });
+    bsCollapse.show();
+}
+
+function cerrarPanelFuncionario(safeId, event) {
+    if (event) event.stopPropagation();
+    const collapseEl = document.getElementById(`edit-func-${safeId}`);
+    const bsCollapse = bootstrap.Collapse.getInstance(collapseEl);
+    if (bsCollapse) bsCollapse.hide();
+}
+
+function cambiarMes(direccion, safeId, rutReal) {
+    fechaActualVisualizacion.setMonth(fechaActualVisualizacion.getMonth() + direccion);
+    dibujarCalendarioSimple(safeId, rutReal, fechaActualVisualizacion);
 }
 
 async function guardarEdicionFuncionario(rut) {
@@ -484,41 +606,79 @@ function cambiarMes(direccion, idFuncionario) {
     dibujarCalendarioSimple(idFuncionario, fechaActualVisualizacion);
 }
 
-function dibujarCalendarioSimple(idFuncionario, fecha) {
+function dibujarCalendarioSimple(safeId, rutReal, fecha) {
     const año = fecha.getFullYear();
     const mes = fecha.getMonth();
     
-    const mesAnioElemento = document.getElementById(`mes-anio-${idFuncionario}`);
+    const mesAnioElemento = document.getElementById(`mes-anio-${safeId}`);
     if (mesAnioElemento) mesAnioElemento.innerText = `${nombresMeses[mes]} ${año}`;
     
-    const contenedor = document.getElementById(`calendario-simple-${idFuncionario}`);
+    const contenedor = document.getElementById(`calendario-simple-${safeId}`);
     if (!contenedor) return;
     
-    contenedor.innerHTML = ''; 
-    
     const totalDiasMes = new Date(año, mes + 1, 0).getDate();
+    const primerDiaSemana = new Date(año, mes, 1).getDay(); 
+    
+    let htmlCalendario = `
+        <div class="d-grid text-center text-muted fw-bold small mb-1" style="grid-template-columns: repeat(7, 1fr);">
+            <div class="py-1">Do</div><div class="py-1">Lu</div><div class="py-1">Ma</div><div class="py-1">Mi</div>
+            <div class="py-1">Ju</div><div class="py-1">Vi</div><div class="py-1">Sá</div>
+        </div>
+        <div class="d-grid bg-white shadow-sm rounded" style="grid-template-columns: repeat(7, 1fr); border-top: 1px solid #dee2e6; border-left: 1px solid #dee2e6; overflow: hidden;">
+    `;
+    
+    for (let i = 0; i < primerDiaSemana; i++) {
+        htmlCalendario += `<div class="bg-light" style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; aspect-ratio: 1 / 1;"></div>`;
+    }
     
     for (let dia = 1; dia <= totalDiasMes; dia++) {
-        let bgClass = 'bg-success'; 
-        
         let diaDeLaSemana = new Date(año, mes, dia).getDay();
+        
+        let bgClass = 'bg-success bg-opacity-10 text-success fw-bold'; 
+        
         if (diaDeLaSemana === 0 || diaDeLaSemana === 6) {
-            bgClass = 'bg-secondary bg-opacity-50'; 
+            bgClass = 'bg-light text-secondary'; 
         } else {
-            if (dia === 8 || dia === 15) bgClass = 'bg-warning text-dark'; 
-            if (dia === 12 || dia === 23) bgClass = 'bg-danger'; 
+            if (dia === 12 || dia === 23) bgClass = 'bg-danger bg-opacity-10 text-danger fw-bold'; 
+            if (dia === 8 || dia === 15) bgClass = 'bg-warning bg-opacity-10 text-dark fw-bold';   
         }
 
-        contenedor.innerHTML += `
-            <div class="${bgClass} text-white rounded d-flex justify-content-center align-items-center shadow-sm" 
-                 style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: bold; cursor: default;" 
-                 title="Día ${dia}">
+        htmlCalendario += `
+            <div class="${bgClass} d-flex justify-content-center align-items-center" 
+                 style="aspect-ratio: 1 / 1; border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; font-size: 1rem; cursor: pointer; transition: background 0.2s;" 
+                 title="Día ${dia}"
+                 onmouseover="this.classList.add('shadow-inner')" 
+                 onmouseout="this.classList.remove('shadow-inner')">
                 ${dia}
             </div>
         `;
     }
+    
+    let casillasTotales = primerDiaSemana + totalDiasMes;
+    let casillasSobrantes = (7 - (casillasTotales % 7)) % 7;
+    for (let i = 0; i < casillasSobrantes; i++) {
+        htmlCalendario += `<div class="bg-light" style="border-right: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; aspect-ratio: 1 / 1;"></div>`;
+    }
+    
+    htmlCalendario += `</div>`; 
+    contenedor.innerHTML = htmlCalendario; 
 }
 
+// =========================================================================
+// MÓDULO DE REPORTES (Pendiente conectar con PHP/PDF)
+// =========================================================================
+function generarReporteMensual(rutFuncionario) {
+    const mesActual = fechaActualVisualizacion.getMonth() + 1; // +1 porque Enero es 0
+    const anioActual = fechaActualVisualizacion.getFullYear();
+    const nombreMes = nombresMeses[fechaActualVisualizacion.getMonth()];
+
+    // Por ahora mostramos una alerta confirmando los datos que enviaremos a PHP
+    alert(`¡Función lista para conectar!\n\nSe generará el reporte en PDF para el RUT: ${rutFuncionario}\nPeriodo: ${nombreMes} ${anioActual}`);
+    
+    // En el futuro, aquí haremos un window.open() a un archivo PHP 
+    // pasándole el RUT y la fecha por la URL para que imprima el PDF.
+    // Ej: window.open(`../../controller/reporte_controller.php?rut=${rutFuncionario}&mes=${mesActual}&anio=${anioActual}`);
+}
 
 /* =========================================================================
    MÓDULO 5: SECCIONES (CRUD)
@@ -646,47 +806,38 @@ async function ejecutarBorrado() {
 }
 
 /* =========================================================================
-   MÓDULO 7: TERMINAL DE ESCÁNER (RELOJ Y LECTURA) - POR COMPAÑERO
+   MÓDULO 7: TERMINAL DE ESCÁNER (RELOJ Y LECTURA)
    ========================================================================= */
-
-// --- 1. RELOJ EN TIEMPO REAL ---
 function actualizarRelojYFecha() {
     const reloj = document.getElementById('reloj-digital');
     const fechaDiv = document.getElementById('fecha-actual');
     
-    // Seguro para que no de error en otras páginas
     if (!reloj || !fechaDiv) return; 
 
     const ahora = new Date();
     
-    // FORMATO DE HORA (24H)
     const horas = String(ahora.getHours()).padStart(2, '0');
     const minutos = String(ahora.getMinutes()).padStart(2, '0');
     const segundos = String(ahora.getSeconds()).padStart(2, '0');
     
     reloj.textContent = `${horas}:${minutos}:${segundos}`;
     
-    // FORMATO DE FECHA EN ESPAÑOL
     const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     let fechaFormateada = ahora.toLocaleDateString('es-ES', opcionesFecha);
     
-    // Mostrar fecha
     fechaDiv.textContent = fechaFormateada;
 }
 
 if (document.getElementById('reloj-digital')) {
-    // Ejecutar inmediatamente al cargar y luego cada 1 segundo (1000ms)
     actualizarRelojYFecha();
     setInterval(actualizarRelojYFecha, 1000);
 
-    // Asegurar que el input del escáner siempre tenga el foco
     document.addEventListener('click', function() {
         const inputScanner = document.getElementById('codigo_tarjeta');
         if (inputScanner) inputScanner.focus();
     });
 }
 
-// --- 2. LECTURA POR CÁMARA WEB ---
 let html5QrcodeScanner = null;
 
 function toggleCamaraEscaner() {
@@ -735,7 +886,6 @@ function onScanFailure(error) {
     // Ignoramos los errores de frame vacío
 }
 
-// --- 3. GATILLO DEL FORMULARIO (Pistola Física y Webcam) ---
 const formEscaner = document.getElementById('form_marcar_asistencia');
 if (formEscaner) {
     formEscaner.addEventListener('submit', async (e) => {
@@ -768,190 +918,38 @@ if (formEscaner) {
     });
 }
 
-// ==========================================
-// MÓDULO: GESTIÓN DE USUARIOS
-// ==========================================
-
-// URL base de tu API (Ajusta la ruta según tu proyecto)
-const API_USUARIOS_URL = '../../api/usuarios.php'; 
-
-// 1. Cargar Usuarios al iniciar la vista
-document.addEventListener("DOMContentLoaded", () => {
-    // Verificamos si estamos en la vista de usuarios buscando la tabla
-    if(document.getElementById('tabla-usuarios')) {
-        cargarUsuarios();
-    }
-});
-
-function cargarUsuarios() {
-    const tabla = document.getElementById('tabla-usuarios');
-    tabla.innerHTML = `<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-danger" role="status"></div></td></tr>`;
-
-    fetch(API_USUARIOS_URL)
-        .then(response => response.json())
-        .then(data => {
-            tabla.innerHTML = '';
-            if (data.length === 0) {
-                tabla.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No hay usuarios registrados.</td></tr>`;
-                return;
-            }
-
-            data.forEach(user => {
-                // Color del badge según rol y estado
-                let rolBadge = user.rol === 'Administrador' ? 'bg-danger-yb-light text-danger-yb' : 'bg-blue-yb-light text-blue-yb';
-                let estadoBadge = user.estado === 'Activo' ? 'bg-success text-white' : 'bg-secondary text-white';
-
-                tabla.innerHTML += `
-                    <tr>
-                        <td class="ps-4 py-3 fw-bold text-black">
-                            <i class="bi bi-person-circle text-muted me-2 fs-5 align-middle"></i> 
-                            ${user.nombre}
-                        </td>
-                        <td class="py-3">${user.login}</td>
-                        <td class="py-3"><span class="badge ${rolBadge} border-0 px-2 py-1">${user.rol}</span></td>
-                        <td class="py-3"><span class="badge ${estadoBadge} rounded-pill">${user.estado}</span></td>
-                        <td class="text-end pe-4 py-3">
-                            <button class="btn btn-sm btn-outline-primary" style="color: var(--yb-blue); border-color: var(--yb-blue);" onclick='editarUsuario(${JSON.stringify(user)})'>
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger ms-1" style="color: var(--yb-red); border-color: var(--yb-red);" onclick="prepararBorrarUsuario(${user.id})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-        })
-        .catch(error => {
-            console.error("Error al cargar usuarios:", error);
-            tabla.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Error al cargar los datos. Verifique la conexión a la API.</td></tr>`;
-        });
-}
-
-// 2. Abrir Modal para NUEVO Usuario
-function abrirModalUsuario() {
-    document.getElementById('formUsuario').reset();
-    document.getElementById('usuario_id').value = '';
-    document.getElementById('textoTituloModal').innerText = 'Registrar Nuevo Usuario';
-    
-    // El campo contraseña es obligatorio al crear
-    document.getElementById('usuario_password').required = true;
-    document.getElementById('hint-password').style.display = 'none';
-
-    var modal = new bootstrap.Modal(document.getElementById('modalFormUsuario'));
-    modal.show();
-}
-
-// 3. Abrir Modal para EDITAR Usuario
-function editarUsuario(user) {
-    document.getElementById('usuario_id').value = user.id;
-    document.getElementById('usuario_nombre').value = user.nombre;
-    document.getElementById('usuario_login').value = user.login;
-    document.getElementById('usuario_rol').value = user.rol;
-    document.getElementById('usuario_estado').value = user.estado;
-    
-    // La contraseña está vacía y no es obligatoria (solo se actualiza si se escribe algo)
-    document.getElementById('usuario_password').value = '';
-    document.getElementById('usuario_password').required = false;
-    document.getElementById('hint-password').style.display = 'inline';
-
-    document.getElementById('textoTituloModal').innerText = 'Editar Usuario';
-
-    var modal = new bootstrap.Modal(document.getElementById('modalFormUsuario'));
-    modal.show();
-}
-
-// 4. Guardar (Crear o Actualizar) Usuario
-function guardarUsuario() {
-    const id = document.getElementById('usuario_id').value;
-    const nombre = document.getElementById('usuario_nombre').value;
-    const login = document.getElementById('usuario_login').value;
-    const password = document.getElementById('usuario_password').value;
-    const rol = document.getElementById('usuario_rol').value;
-    const estado = document.getElementById('usuario_estado').value;
-
-    // Validación básica
-    if (!nombre || !login || (!id && !password)) {
-        alert("Por favor complete los campos obligatorios.");
-        return;
-    }
-
-    const payload = { nombre, login, rol, estado };
-    // Solo enviamos la contraseña si el usuario escribió una
-    if (password) payload.password = password;
-
-    const method = id ? 'PUT' : 'POST';
-    if (id) payload.id = id;
-
-    fetch(API_USUARIOS_URL, {
-        method: method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('modalFormUsuario')).hide();
-            cargarUsuarios(); // Recargar la tabla
-        } else {
-            alert(data.message || "Error al guardar el usuario.");
-        }
-    })
-    .catch(error => console.error("Error:", error));
-}
-
-// 5. Eliminar Usuario
-function prepararBorrarUsuario(id) {
-    document.getElementById('delete_usuario_id').value = id;
-    var modal = new bootstrap.Modal(document.getElementById('modalBorrarUsuario'));
-    modal.show();
-}
-
-function ejecutarBorrarUsuario() {
-    const id = document.getElementById('delete_usuario_id').value;
-
-    fetch(`${API_USUARIOS_URL}?id=${id}`, {
-        method: 'DELETE'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('modalBorrarUsuario')).hide();
-            cargarUsuarios();
-        } else {
-            alert(data.message || "Error al eliminar.");
-        }
-    })
-    .catch(error => console.error("Error:", error));
-}
 
 /* =========================================================================
-   MÓDULO 8: GESTIÓN DE USUARIOS (Solo Superadmin)
+   MÓDULO 8: GESTIÓN DE USUARIOS
    ========================================================================= */
-
 async function cargarListaUsuarios() {
     const tbody = document.getElementById('tabla-usuarios');
     if (!tbody) return;
+
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-danger" role="status"></div></td></tr>`;
 
     const res = await apiUsuarios.getUsuarios();
     tbody.innerHTML = '';
 
     if (res.status === 1 && res.data && res.data.length > 0) {
         res.data.forEach(u => {
-            const badgeEstado = u.estado === 'Activo' ? 'bg-success' : 'bg-danger';
-            const badgeRol = u.rol === 'superadmin' ? 'bg-dark' : 'bg-secondary';
+            let rolBadge = u.rol === 'superadmin' ? 'bg-danger-yb-light text-danger-yb' : 'bg-blue-yb-light text-blue-yb';
+            let estadoBadge = u.estado === 'Activo' ? 'bg-success text-white' : 'bg-secondary text-white';
             
             tbody.innerHTML += `
             <tr>
-                <td class="ps-4 fw-bold text-black">${u.nombre}</td>
-                <td><span class="text-muted"><i class="bi bi-person me-1"></i>${u.login}</span></td>
-                <td><span class="badge ${badgeRol}">${u.rol}</span></td>
-                <td><span class="badge ${badgeEstado}">${u.estado}</span></td>
-                <td class="text-end pe-4">
-                    <button class="btn btn-sm btn-outline-primary me-2" onclick="editarUsuario(${u.id}, '${u.nombre}', '${u.login}', '${u.rol}', '${u.estado}')">
+                <td class="ps-4 py-3 fw-bold text-black">
+                    <i class="bi bi-person-circle text-muted me-2 fs-5 align-middle"></i> 
+                    ${u.nombre}
+                </td>
+                <td class="py-3">${u.login}</td>
+                <td class="py-3"><span class="badge ${rolBadge} border-0 px-2 py-1">${u.rol}</span></td>
+                <td class="py-3"><span class="badge ${estadoBadge} rounded-pill">${u.estado}</span></td>
+                <td class="text-end pe-4 py-3">
+                    <button class="btn btn-sm btn-outline-primary" style="color: var(--yb-blue); border-color: var(--yb-blue);" onclick="editarUsuario(${u.id}, '${u.nombre}', '${u.login}', '${u.rol}', '${u.estado}')">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="abrirModalBorrarUsuario(${u.id})">
+                    <button class="btn btn-sm btn-outline-danger ms-1" style="color: var(--yb-red); border-color: var(--yb-red);" onclick="abrirModalBorrarUsuario(${u.id})">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
@@ -966,7 +964,8 @@ function abrirModalUsuario() {
     document.getElementById('formUsuario').reset();
     document.getElementById('usuario_id').value = '';
     document.getElementById('textoTituloModal').innerText = 'Registrar Nuevo Usuario';
-    document.getElementById('hint-password').style.display = 'none'; // Escondemos el mensaje de "dejar en blanco"
+    document.getElementById('hint-password').style.display = 'none'; 
+    document.getElementById('usuario_password').required = true;
     const modal = new bootstrap.Modal(document.getElementById('modalFormUsuario'));
     modal.show();
 }
@@ -977,10 +976,11 @@ function editarUsuario(id, nombre, login, rol, estado) {
     document.getElementById('usuario_login').value = login;
     document.getElementById('usuario_rol').value = rol;
     document.getElementById('usuario_estado').value = estado;
-    document.getElementById('usuario_password').value = ''; // Siempre vacío por seguridad
+    document.getElementById('usuario_password').value = ''; 
+    document.getElementById('usuario_password').required = false;
     
     document.getElementById('textoTituloModal').innerText = 'Editar Usuario';
-    document.getElementById('hint-password').style.display = 'inline'; // Mostramos el mensaje de "dejar en blanco"
+    document.getElementById('hint-password').style.display = 'inline'; 
     
     const modal = new bootstrap.Modal(document.getElementById('modalFormUsuario'));
     modal.show();
@@ -1035,51 +1035,3 @@ async function ejecutarBorrarUsuario() {
         alert(res.message);
     }
 }
-
-
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Dentro de tu script.js, en la función que carga los turnos
-if (contTurnosTest) {
-    contTurnosTest.innerHTML += html;
-}
-//enter crear weas
-document.addEventListener('DOMContentLoaded', () => {
-
-    // 1. Escuchar 'Enter' en el formulario de TURNOS
-    const formTurno = document.getElementById('formTurno');
-    if (formTurno) {
-        formTurno.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // Evita que la página parpadee o se recargue
-                guardarTurno();         // Llama a tu función de guardado
-            }
-        });
-    }
-
-    // 2. Escuchar 'Enter' en el formulario de SECCIONES
-    const formSeccion = document.getElementById('formSeccion');
-    if (formSeccion) {
-        formSeccion.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); 
-                guardarSeccion(); 
-            }
-        });
-    }
-
-    // 3. Escuchar 'Enter' en el formulario de ENROLAMIENTO
-    const formEnrolar = document.getElementById('form-enrolar');
-    if (formEnrolar) {
-        formEnrolar.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                guardarNuevoFuncionario();
-            }
-        });
-    }
-
-});
-
-
-
-//--------------------------------------------------------------------------------------------------------------------------------------------------------------

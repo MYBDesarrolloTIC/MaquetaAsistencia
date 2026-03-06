@@ -1,9 +1,9 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['IDusuario'])) {
-    header("Location: ../views/VistaLogin.php");
-    exit(); 
+if (!isset($_SESSION['rol'])) {
+    header("Location: ../view/views/VistaLogin.php");
+    exit();
 }
 ?> 
 

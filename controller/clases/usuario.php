@@ -2,20 +2,29 @@
 require_once __DIR__ . '/../../config/conexion.php';
 
 class Usuario {
+    
+    /* =========================================================================
+       1. FUNCIÓN DE LOGIN (Arreglada para tus columnas exactas)
+       ========================================================================= */
     public static function validarLogin($login, $password) {
         try {
             $pdo = Conexion::conectar();
-            $stmt = $pdo->prepare("SELECT IDusuario, nombre_usuario, login, password_hash, rol, estado FROM usuarios WHERE login = :log");
+            // Usamos AS para engañar al sistema y que reciba los nombres que espera
+            $sql = "SELECT IDusuario AS id, nombre_usuario AS nombre, nombre_usuario AS login, password_hash AS password, Rol AS rol 
+                    FROM usuarios 
+                    WHERE nombre_usuario = :log";
+            
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':log', $login);
             $stmt->execute();
             
             $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($usuario && $usuario['estado'] === 'Activo') {
-                
+            // Quitamos lo del "estado" porque tu base de datos no tiene esa columna
+            if ($usuario) {
+                // Verifica la clave (encriptada o en texto plano)
                 if (password_verify($password, $usuario['password']) || $password === $usuario['password']) {
-                    
-                    unset($usuario['password']);
+                    unset($usuario['password']); // Borramos la clave por seguridad
                     return $usuario; 
                 }
             }
@@ -25,14 +34,20 @@ class Usuario {
         }
     }
 
+    /* =========================================================================
+       2. FUNCIONES DEL CRUD (Para el Superadmin - Gestión de Usuarios)
+       ========================================================================= */
     public static function obtenerTodos() {
         try {
             $pdo = Conexion::conectar();
-            $stmt = $pdo->prepare("SELECT id, nombre, login, rol, estado FROM usuarios ORDER BY nombre ASC");
+            $sql = "SELECT IDusuario AS id, nombre_usuario AS nombre, nombre_usuario AS login, Rol AS rol, 'Activo' AS estado 
+                    FROM usuarios 
+                    ORDER BY nombre_usuario ASC";
+            $stmt = $pdo->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            throw new Exception("Error al obtener usuarios: " . $e->getMessage());
+            throw new Exception("Error BD: " . $e->getMessage());
         }
     }
 
@@ -40,16 +55,14 @@ class Usuario {
         try {
             $pdo = Conexion::conectar();
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $sql = "INSERT INTO usuarios (nombre, login, password, rol, estado) VALUES (:nom, :log, :pass, :rol, :est)";
+            $sql = "INSERT INTO usuarios (nombre_usuario, password_hash, Rol) VALUES (:log, :pass, :rol)";
             $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':nom', $nombre);
-            $stmt->bindParam(':log', $login);
+            $stmt->bindParam(':log', $login); 
             $stmt->bindParam(':pass', $hash);
-            $stmt->bindParam(':rol', $rol);
-            $stmt->bindParam(':est', $estado);
+            $stmt->bindParam(':rol', $rol);   
             return $stmt->execute();
         } catch (PDOException $e) {
-            if ($e->getCode() == 23000) throw new Exception("El nombre de usuario (login) ya existe.");
+            if ($e->getCode() == 23000) throw new Exception("El nombre de usuario ya existe.");
             throw new Exception("Error BD: " . $e->getMessage());
         }
     }
@@ -57,25 +70,21 @@ class Usuario {
     public static function actualizar($id, $nombre, $login, $password, $rol, $estado) {
         try {
             $pdo = Conexion::conectar();
-            
             if (empty($password)) {
-                $sql = "UPDATE usuarios SET nombre = :nom, login = :log, rol = :rol, estado = :est WHERE id = :id";
+                $sql = "UPDATE usuarios SET nombre_usuario = :log, Rol = :rol WHERE IDusuario = :id";
                 $stmt = $pdo->prepare($sql);
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $sql = "UPDATE usuarios SET nombre = :nom, login = :log, password = :pass, rol = :rol, estado = :est WHERE id = :id";
+                $sql = "UPDATE usuarios SET nombre_usuario = :log, password_hash = :pass, Rol = :rol WHERE IDusuario = :id";
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindParam(':pass', $hash);
             }
-            
             $stmt->bindParam(':id', $id);
-            $stmt->bindParam(':nom', $nombre);
             $stmt->bindParam(':log', $login);
             $stmt->bindParam(':rol', $rol);
-            $stmt->bindParam(':est', $estado);
             return $stmt->execute();
         } catch (PDOException $e) {
-            if ($e->getCode() == 23000) throw new Exception("El nombre de usuario (login) ya está en uso por otra persona.");
+            if ($e->getCode() == 23000) throw new Exception("El nombre de usuario ya está en uso.");
             throw new Exception("Error BD: " . $e->getMessage());
         }
     }
@@ -83,7 +92,7 @@ class Usuario {
     public static function eliminar($id) {
         try {
             $pdo = Conexion::conectar();
-            $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = :id");
+            $stmt = $pdo->prepare("DELETE FROM usuarios WHERE IDusuario = :id");
             $stmt->bindParam(':id', $id);
             return $stmt->execute();
         } catch (PDOException $e) {

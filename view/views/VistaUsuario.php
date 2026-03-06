@@ -8,7 +8,7 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'superadmin') {
 <?php include '../includes/header.php'; ?>
 
 <main class="main-content flex-grow-1 p-4 p-md-5 overflow-auto">
-    
+
     <div class="header-seccion d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="fs-3 fw-bold mb-1">Gestión de Usuarios</h1>
@@ -53,26 +53,31 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'superadmin') {
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-light border-bottom-0">
                 <h5 class="modal-title fw-bold text-black" id="tituloModalUsuario">
-                    <i class="bi bi-person-badge me-2 text-danger-yb"></i> <span id="textoTituloModal">Registrar Usuario</span>
+                    <i class="bi bi-person-badge me-2 text-danger-yb"></i> <span id="textoTituloModal">Registrar
+                        Usuario</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <form id="formUsuario">
                     <input type="hidden" id="usuario_id" value="">
-                    
+
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">Nombre Completo</label>
-                        <input type="text" class="form-control" id="usuario_nombre" placeholder="Ej. Juan Pérez" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">Nombre de Usuario</label>
-                        <input type="text" class="form-control" id="usuario_login" placeholder="Ej. jperez o RUT" required>
+                        <input type="text" class="form-control" id="usuario_nombre" placeholder="Ej. Juan Pérez"
+                            required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">Contraseña <span id="hint-password" class="fw-normal fst-italic text-secondary" style="display:none;">(Dejar en blanco para no cambiar)</span></label>
+                        <label class="form-label fw-bold small text-muted">Nombre de Usuario</label>
+                        <input type="text" class="form-control" id="usuario_login" placeholder="Ej. jperez o RUT"
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Contraseña <span id="hint-password"
+                                class="fw-normal fst-italic text-secondary" style="display:none;">(Dejar en blanco para
+                                no cambiar)</span></label>
                         <div class="input-group">
                             <span class="input-group-text bg-light text-muted"><i class="bi bi-key"></i></span>
                             <input type="password" class="form-control" id="usuario_password" placeholder="******">
@@ -83,8 +88,10 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'superadmin') {
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">Rol en el Sistema</label>
                             <select class="form-select" id="usuario_rol" required>
-                                <option value="Administrador">Administrador</option>
-                                <option value="Operador">Operador (Solo lectura/Terminal)</option>
+                                <option value="" disabled selected>Seleccione un rol...</option>
+                                <option value="superadmin">Superadmin (Acceso Total + Usuarios)</option>
+                                <option value="admin">Administrador (Gestión General)</option>
+                                <option value="operador">Operador (Solo Terminal/Escáner)</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -99,7 +106,8 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'superadmin') {
             </div>
             <div class="modal-footer border-top-0 pt-0 bg-light p-4">
                 <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn text-white fw-bold px-4" style="background-color: var(--yb-blue);" onclick="guardarUsuario()">
+                <button type="button" class="btn text-white fw-bold px-4" style="background-color: var(--yb-blue);"
+                    onclick="guardarUsuario()">
                     <i class="bi bi-check-circle me-1"></i> Guardar
                 </button>
             </div>
@@ -113,11 +121,13 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'superadmin') {
             <div class="modal-body text-center py-4">
                 <i class="bi bi-exclamation-circle text-danger-yb display-4 d-block mb-3"></i>
                 <h5 class="fw-bold text-black mb-2">¿Eliminar Usuario?</h5>
-                <p class="text-muted small mb-4">Esta acción no se puede deshacer y el usuario perderá su acceso al sistema.</p>
+                <p class="text-muted small mb-4">Esta acción no se puede deshacer y el usuario perderá su acceso al
+                    sistema.</p>
                 <input type="hidden" id="delete_usuario_id">
                 <div class="d-flex justify-content-center gap-2">
                     <button type="button" class="btn btn-light fw-bold px-4" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn fw-bold px-4 text-white" style="background-color: var(--yb-red);" onclick="ejecutarBorrarUsuario()">Eliminar</button>
+                    <button type="button" class="btn fw-bold px-4 text-white" style="background-color: var(--yb-red);"
+                        onclick="ejecutarBorrarUsuario()">Eliminar</button>
                 </div>
             </div>
         </div>

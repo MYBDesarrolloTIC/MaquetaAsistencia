@@ -18,34 +18,41 @@
                 <h5 class="mt-3 text-black fw-bold mb-0">Administrador</h5>
                 <small class="text-muted">Mun. Yerbas Buenas</small>
             </div>
+            
             <div class="list-group list-group-flush flex-grow-1 mt-2">
                 <a href="VistaAsistencia.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-clock-history me-2"></i> Control Asistencia
                 </a>
+                
                 <a href="VistaSecciones.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-building me-2"></i> Secciones
                 </a>
+                
                 <a href="VistaTurno.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-calendar-check me-2"></i> Turnos
                 </a>
+                
                 <a href="VistaEnrolar.php" class="list-group-item list-group-item-action">
                     <i class="bi bi-person-plus-fill me-2"></i> Enrolar
                 </a>
-                </a>
+                
                 <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'superadmin'): ?>
-                    <a href="VistaUsuario.php" class="nav-link">
-                        <i class="bi bi-people"></i> Usuarios
+                    <a href="VistaUsuario.php" class="list-group-item list-group-item-action">
+                        <i class="bi bi-people-fill me-2"></i> Usuarios
                     </a>
                 <?php endif; ?>
+                
                 <a href="VistaEscaner.php" class="list-group-item list-group-item-action">
-                    <i class="bi bi-building me-2"></i> Escaner
+                    <i class="bi bi-upc-scan me-2"></i> Escáner
                 </a>
             </div>
+            
             <div class="p-3 border-top">
                 <a href="../../controller/login_controller.php?action=logout" class="btn btn-outline-danger w-100 fw-bold">
                 <i class="bi bi-box-arrow-left me-2"></i> Cerrar Sesión
                 </a>
             </div>
+            
         </nav>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

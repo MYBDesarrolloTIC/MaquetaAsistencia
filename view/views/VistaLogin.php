@@ -19,7 +19,7 @@
 
                     <div id="alertaError" class="alert alert-danger d-none text-center p-2 mb-3"></div>
 
-                    <form id="form_login">
+                    <form id="form_login" onsubmit="event.preventDefault();">
                         <h3 class="text-center fw-bold mb-4">Iniciar Sesión</h3>
                         <div class="mb-3">
                             <label for="usuario" class="form-label fw-semibold">Usuario:</label>
@@ -35,7 +35,7 @@
             </div>
         </div>
     </div>
-    <script src="../../model/api.js"></script>
-    <script src="../../assets/js/script.js"></script>
+    <script src="../../model/api.js?v=1"></script>
+    <script src="../../assets/js/script.js?v=1"></script>
 </body>
 </html>

@@ -1,128 +1,148 @@
-/* TABLA: departamentos
-Propósito: Almacena el registro de las diferentes áreas, secciones o departamentos de la empresa. 
-Permite organizar a los trabajadores según su área funcional.
-*/
-CREATE TABLE departamentos (
-    IDdepartamento INT AUTO_INCREMENT PRIMARY KEY,
-    nombreDepartamento VARCHAR(50)
-);
+-- Apagamos la validación de llaves foráneas temporalmente para poder resetear
+SET FOREIGN_KEY_CHECKS = 0;
 
-/* TABLA: turno
-Propósito: Define los diferentes horarios de trabajo disponibles en la empresa. 
-Establece a qué hora debe entrar y salir un trabajador asignado a dicho turno.
-*/
-CREATE TABLE turno (
-    IDTurno INT AUTO_INCREMENT PRIMARY KEY,
-    nombreTurno VARCHAR(25),
-    turnoEntrada TIME,
-    turnoSalida TIME
-);
+-- Borramos las tablas si existen
+DROP TABLE IF EXISTS reportes_historicos;
+DROP TABLE IF EXISTS ausencia_permiso;
+DROP TABLE IF EXISTS asistencia;
+DROP TABLE IF EXISTS funcionarios;
+DROP TABLE IF EXISTS usuarios;
+DROP TABLE IF EXISTS turnos;
+DROP TABLE IF EXISTS secciones;
+--esto es para tener base de datos limpia sin errores de tipeo en otros dispositivos
 
-/* TABLA: usuarios
-Propósito: Almacena las credenciales de las personas que administrarán el sistema (ej. Recursos Humanos, Jefaturas). 
-Maneja de forma segura las contraseñas y define qué nivel de acceso (Rol) tiene cada uno.
-*/
+-- =======================================================================
+-- 1. TABLA: secciones 
+-- =======================================================================
+CREATE TABLE secciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- =======================================================================
+-- 2. TABLA: turnos 
+-- =======================================================================
+CREATE TABLE turnos (
+    IDturno INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    hora_entrada TIME NOT NULL,
+    hora_salida TIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- =======================================================================
+-- 3. TABLA: usuarios (Administradores del sistema)
+-- =======================================================================
 CREATE TABLE usuarios (
     IDusuario INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_usuario VARCHAR(20),
-    password_hash VARCHAR(255),
-    Rol VARCHAR(15)
-);
+    nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    Rol VARCHAR(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-/* TABLA: funcionarios
-Propósito: Es la tabla central del sistema. Almacena la información personal y laboral de cada empleado. 
-Se conecta (mediante claves foráneas) con las tablas 'departamentos' y 'turno' para saber dónde y en qué horario trabaja.
-*/
+INSERT INTO usuarios (nombre_usuario, password_hash, Rol) 
+VALUES ('jefe_rrhh', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'superadmin');
+
+-- =======================================================================
+-- 4. TABLA: funcionarios (¡Actualizada para la Ley Chilena!)
+-- =======================================================================
 CREATE TABLE funcionarios (
-    rut INT PRIMARY KEY, 
-    nombre VARCHAR(50),
-    apellidoP VARCHAR(50),
+    rut VARCHAR(20) PRIMARY KEY, 
+    nombre VARCHAR(50) NOT NULL,
+    apellidoP VARCHAR(50) NOT NULL,
     apellidoM VARCHAR(50),
-    IDdepartamento INT,
+    IDseccion INT,
     IDturno INT,
-    FOREIGN KEY (IDdepartamento) REFERENCES departamentos(IDdepartamento),
-    FOREIGN KEY (IDturno) REFERENCES turno(IDTurno)
-);
+    tipo_contrato ENUM('Estatuto Administrativo', 'Codigo del Trabajo') DEFAULT 'Estatuto Administrativo',
+    estado INT DEFAULT 1,
+    FOREIGN KEY (IDseccion) REFERENCES secciones(id) ON DELETE SET NULL,
+    FOREIGN KEY (IDturno) REFERENCES turnos(IDturno) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-/* TABLA: asistencia
-Propósito: Registra el control de reloj control diario. 
-Guarda el momento exacto (fecha y hora) en que un funcionario inicia y finaliza su jornada laboral.
-*/
+-- =======================================================================
+-- 5. TABLA: asistencia (Reloj Control)
+-- =======================================================================
 CREATE TABLE asistencia (
-    idasistencia INT AUTO_INCREMENT PRIMARY KEY,
-    Horaentrada DATETIME,
-    Horasalida DATETIME,
-    rutFuncionario INT, 
-    FOREIGN KEY (rutFuncionario) REFERENCES funcionarios(rut)
-);
+    IDmarca INT AUTO_INCREMENT PRIMARY KEY,
+    rut_funcionario VARCHAR(20) NOT NULL,
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+    tipo_marca ENUM('entrada', 'salida') NOT NULL,
+    FOREIGN KEY (rut_funcionario) REFERENCES funcionarios(rut) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-/* TABLA: ausencia_permiso
-Propósito: Lleva el historial de los días que un funcionario no asiste a trabajar de manera justificada o injustificada. 
-Incluye licencias médicas, vacaciones o permisos especiales, definiendo cuándo empiezan y cuándo terminan.
-*/
+-- =======================================================================
+-- 6. TABLA: ausencia_permiso (Licencias, Días Administrativos, etc.)
+-- =======================================================================
 CREATE TABLE ausencia_permiso (
     idAusencia INT AUTO_INCREMENT PRIMARY KEY,
-    RUTFuncionario INT,
-    tipo VARCHAR(50),
-    fechaInicio DATETIME,
-    fechaFIN DATETIME,
-    FOREIGN KEY (RUTFuncionario) REFERENCES funcionarios(rut)
-);
+    rut_funcionario VARCHAR(20) NOT NULL,
+    tipo VARCHAR(50) NOT NULL,
+    fechaInicio DATETIME NOT NULL,
+    fechaFIN DATETIME NOT NULL,
+    FOREIGN KEY (rut_funcionario) REFERENCES funcionarios(rut) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- =======================================================================
+-- 7. TABLA: reportes_historicos (Acumulador Mensual para Planillas)
+-- =======================================================================
 CREATE TABLE reportes_historicos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     mes INT NOT NULL,
     anio INT NOT NULL,
-    funcionario_id INT NOT NULL,
+    rut_funcionario VARCHAR(20) NOT NULL,
+    horas_ordinarias TIME DEFAULT '00:00:00',
     total_extras_diurnas TIME DEFAULT '00:00:00',
     total_extras_nocturnas TIME DEFAULT '00:00:00',
+    total_atrasos TIME DEFAULT '00:00:00',
     fecha_generacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (funcionario_id) REFERENCES funcionarios(id)
-);
+    FOREIGN KEY (rut_funcionario) REFERENCES funcionarios(rut) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
+-- =======================================================================
+-- PROCEDIMIENTOS ALMACENADOS Y EVENTOS
+-- =======================================================================
 DELIMITER $$
 
-CREATE PROCEDURE sp_guardar_reporte_mensual()
+CREATE PROCEDURE sp_crear_plantilla_mensual()
 BEGIN
+    DECLARE v_mes_actual INT;
+    DECLARE v_anio_actual INT;
 
-    DECLARE v_mes_anterior INT;
-    DECLARE v_anio_anterior INT;
+    SET v_mes_actual = MONTH(CURRENT_DATE());
+    SET v_anio_actual = YEAR(CURRENT_DATE());
 
-
-    IF MONTH(CURRENT_DATE()) = 1 THEN
-        SET v_mes_anterior = 12;
-        SET v_anio_anterior = YEAR(CURRENT_DATE()) - 1;
-    ELSE
-        SET v_mes_anterior = MONTH(CURRENT_DATE()) - 1;
-        SET v_anio_anterior = YEAR(CURRENT_DATE());
-    END IF;
-
-    INSERT INTO reportes_historicos (mes, anio, funcionario_id, total_extras_diurnas, total_extras_nocturnas)
+    -- Pre-carga a todos los funcionarios activos en el reporte del mes a cero
+    -- para que PHP vaya sumando las horas diarias allí.
+    INSERT INTO reportes_historicos (mes, anio, rut_funcionario)
     SELECT 
-        v_mes_anterior,
-        v_anio_anterior,
-        f.id,
-        SEC_TO_TIME(SUM(TIME_TO_SEC(IFNULL(a.horas_extras_diurnas, '00:00:00')))),
-        SEC_TO_TIME(SUM(TIME_TO_SEC(IFNULL(a.horas_extras_nocturnas, '00:00:00'))))
-    FROM funcionarios f
-    INNER JOIN asistencia a ON f.id = a.funcionario_id
-    WHERE MONTH(a.fecha) = v_mes_anterior 
-      AND YEAR(a.fecha) = v_anio_anterior
-    GROUP BY f.id;
-    
+        v_mes_actual,
+        v_anio_actual,
+        rut
+    FROM funcionarios 
+    WHERE estado = 1
+    AND NOT EXISTS (
+        SELECT 1 FROM reportes_historicos 
+        WHERE mes = v_mes_actual 
+        AND anio = v_anio_actual 
+        AND rut_funcionario = funcionarios.rut
+    );
 END $$
 
 DELIMITER ;
 
 SET GLOBAL event_scheduler = ON;
+DROP EVENT IF EXISTS ev_apertura_mes;
 
 DELIMITER $$
-CREATE EVENT ev_cierre_mensual
+CREATE EVENT ev_apertura_mes
 ON SCHEDULE EVERY 1 MONTH
-STARTS '2026-04-01 02:00:00' -- Empezará el 1 de abril a las 2:00 AM (calculando marzo)
+STARTS '2026-04-01 00:01:00'
 DO
 BEGIN
-    CALL sp_guardar_reporte_mensual();
-END;
+    CALL sp_crear_plantilla_mensual();
+END $$
 DELIMITER ;
+
+-- Volvemos a encender las alarmas de seguridad
+SET FOREIGN_KEY_CHECKS = 1;

@@ -29,12 +29,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $data) {
         echo json_encode(['status' => 0, 'message' => 'Campos vacíos']);
         exit();
     }
-
-    // CORRECCIÓN 1: La función real en tu clase es validarLogin
+    
     $usuarioValido = Usuario::validarLogin($nombre_usuario, $contra);
 
     if ($usuarioValido) {
-        // CORRECCIÓN 2: Los nombres exactos de las columnas en tu BD
         $_SESSION['id_usuario'] = $usuarioValido['id'];
         $_SESSION['nombre']     = $usuarioValido['nombre']; 
         $_SESSION['rol']        = $usuarioValido['rol']; 
