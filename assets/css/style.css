@@ -493,3 +493,34 @@ body {
     0% { transform: translateX(100%); opacity: 0; } 
     100% { transform: translateX(0); opacity: 1; } 
 }
+/* =========================================================================
+   FORZAR CENTRADO DE TODOS LOS POPUPS (MODALES) EN CUALQUIER PANTALLA
+   ========================================================================= */
+.modal-dialog.modal-dialog-centered {
+    display: flex !important;
+    align-items: center !important;      /* Centra verticalmente */
+    justify-content: center !important;  /* Centra horizontalmente */
+    min-height: 100vh !important;        /* Toma el 100% del alto de la pantalla */
+    margin: 0 auto !important;           /* Previene que otros márgenes lo muevan */
+}
+
+/* Evita que el contenido interno se estire de forma extraña */
+.modal-dialog.modal-dialog-centered .modal-content {
+    margin: auto !important;
+    width: 100%;
+}
+/* =========================================================================
+   FORZAR CENTRADO ABSOLUTO DE LOS POPUPS (MODALES)
+   ========================================================================= */
+.modal-dialog.modal-dialog-centered {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: calc(100vh - 3rem) !important; /* Usa casi toda la pantalla */
+    margin: 0 auto !important;
+}
+
+.modal-dialog.modal-dialog-centered .modal-content {
+    margin: auto !important;
+    width: 100%;
+}

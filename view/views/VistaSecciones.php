@@ -1,4 +1,3 @@
-
 <?php include '../includes/header.php'; ?>
 
 <div class="header-seccion">
@@ -20,7 +19,7 @@
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-light border-bottom-0">
                 <h5 class="modal-title fw-bold text-black" id="tituloModalSeccion">
-                    <i class="bi bi-building-add me-2 text-danger-yb">wqyteuq</i> Formulario de Sección
+                    <i class="bi bi-building-add me-2 text-danger-yb"></i> Formulario de Sección
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -44,7 +43,7 @@
 </div>
 
 <div class="modal fade" id="modalBorrar" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-top-danger-yb">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title text-black fw-bold"><i class="bi bi-exclamation-triangle-fill text-danger-yb me-2"></i>Atención</h5>
@@ -63,4 +62,3 @@
 </div>
 
 <?php include '../includes/footer.php'; ?>
-

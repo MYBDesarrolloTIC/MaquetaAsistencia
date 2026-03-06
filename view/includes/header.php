@@ -1,5 +1,5 @@
+<!DOCTYPE html>
 <?php
-// 1. EL SEGURO DE SESIÓN: Solo inicia la sesión si no hay una activa previamente
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -19,7 +19,7 @@ if (!isset($_SESSION['rol'])) {
     <title>Sistema de Asistencia - Municipalidad de Yerbas Buenas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="../../assets/css/style.css?v=2">
 </head>
 <body>
     <div class="d-flex h-100 vh-100">
