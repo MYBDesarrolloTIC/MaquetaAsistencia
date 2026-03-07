@@ -6,12 +6,27 @@ let modalFormTurnoInstance = null;
 let modalBorrarTurnoInstance = null;
 let funcionarioAborrarId = null;
 let seccionABorrarId = null;
-let fechaActualVisualizacion = new Date(2026, 2, 1); // Marzo 2026 (Para pruebas)
+let fechaActualVisualizacion = new Date(); // Obtiene el mes real
+
 const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 /* =========================================================================
-   2. FUNCIÓN GLOBAL: MOSTRAR NOTIFICACIÓN (TOASTS ELEGANTES)
+   2. FUNCIÓN GLOBAL: NOTIFICACIONES (TOASTS)
    ========================================================================= */
+function formatearRUT(rut) {
+    if (!rut) return '';
+    let valorLimpio = String(rut).replace(/[^0-9kK]/g, '').toUpperCase();
+    if (valorLimpio.length <= 1) return valorLimpio;
+
+    let cuerpo = valorLimpio.slice(0, -1);
+    let dv = valorLimpio.slice(-1);
+
+    cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    return `${cuerpo}-${dv}`;
+}
+
+
 function mostrarNotificacion(mensaje, tipo = 'success') {
     let container = document.getElementById('toast-container-yb');
     if (!container) {
@@ -24,14 +39,13 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
 
     const config = {
         success: { bg: 'bg-success', icon: 'bi-check-circle-fill', text: 'text-white', close: 'btn-close-white' },
-        error:   { bg: 'bg-danger',  icon: 'bi-x-circle-fill', text: 'text-white', close: 'btn-close-white' },
+        error: { bg: 'bg-danger', icon: 'bi-x-circle-fill', text: 'text-white', close: 'btn-close-white' },
         warning: { bg: 'bg-warning', icon: 'bi-exclamation-triangle-fill', text: 'text-dark', close: '' },
-        info:    { bg: 'bg-primary', icon: 'bi-info-circle-fill', text: 'text-white', close: 'btn-close-white' },
-        delete:  { bg: 'bg-danger',  icon: 'bi-trash-fill', text: 'text-white', close: 'btn-close-white' } 
+        info: { bg: 'bg-primary', icon: 'bi-info-circle-fill', text: 'text-white', close: 'btn-close-white' },
+        delete: { bg: 'bg-danger', icon: 'bi-trash-fill', text: 'text-white', close: 'btn-close-white' }
     };
 
     const current = config[tipo] || config.success;
-
     const toastEl = document.createElement('div');
     toastEl.className = `toast align-items-center border-0 shadow-lg mb-3 rounded-3 ${current.bg} ${current.text}`;
     toastEl.setAttribute('role', 'alert');
@@ -51,31 +65,29 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
 }
 
 /* =========================================================================
-   3. INICIALIZACIÓN DEL DOCUMENTO (DOM Ready)
+   3. INICIALIZACIÓN DEL DOCUMENTO
    ========================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-
-    // Alerta de Login Exitoso
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('login') === 'success') {
         mostrarNotificacion("¡Inicio de sesión exitoso! Bienvenido.", "success");
         window.history.replaceState({}, document.title, window.location.pathname);
     }
-
+    inicializarBuscadorUniversal('buscar-secciones', 'contenedor-secciones', '.col-md-4, .col-lg-3');
+    inicializarBuscadorUniversal('buscar-turnos', 'contenedor-turnos', '.col-md-4, .col-lg-3');
+    
     if (document.getElementById('dash-total-func')) cargarEstadisticasDashboard();
 
     const formLogin = document.getElementById("form_login");
     if (formLogin) formLogin.addEventListener("submit", procesarLogin);
 
-    const selectTurno = document.getElementById('enrolar_turno');
-    const selectSeccion = document.getElementById('enrolar_seccion');
-    if (selectTurno) cargarSelectTurnosEnrolar();
-    if (selectSeccion) cargarSelectSeccionesEnrolar();
+    if (document.getElementById('enrolar_turno')) cargarSelectTurnosEnrolar();
+    if (document.getElementById('enrolar_seccion')) cargarSelectSeccionesEnrolar();
 
     const formEnrolar = document.getElementById('form-enrolar');
     if (formEnrolar) {
-        formEnrolar.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') { event.preventDefault(); guardarNuevoFuncionario(); }
+        formEnrolar.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); guardarNuevoFuncionario(); }
         });
     }
 
@@ -94,26 +106,22 @@ document.addEventListener('DOMContentLoaded', () => {
         inputSalida.addEventListener('change', calcularTiempoJornadaFormulario);
     }
 
-    const contenedorTurnos = document.getElementById('contenedor-turnos');
-    if (contenedorTurnos) cargarTarjetasTurnos();
+    if (document.getElementById('contenedor-turnos')) cargarTarjetasTurnos();
 
     const formTurno = document.getElementById('formTurno');
     if (formTurno) {
-        formTurno.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') { event.preventDefault(); guardarTurno(); }
+        formTurno.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); guardarTurno(); }
         });
     }
 
-    const contenedorFuncionarios = document.getElementById('contenedor-funcionarios');
-    if (contenedorFuncionarios) cargarListaFuncionarios();
-
-    const contenedorSecciones = document.getElementById('contenedor-secciones');
-    if (contenedorSecciones) cargarListaSecciones();
+    if (document.getElementById('contenedor-funcionarios')) cargarListaFuncionarios();
+    if (document.getElementById('contenedor-secciones')) cargarListaSecciones();
 
     const formSeccion = document.getElementById('formSeccion');
     if (formSeccion) {
-        formSeccion.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') { event.preventDefault(); guardarSeccion(); }
+        formSeccion.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); guardarSeccion(); }
         });
     }
 });
@@ -135,7 +143,7 @@ async function procesarLogin(e) {
         const vuser = await validUser(userVal, passVal);
         if (vuser.status === 1 && vuser.data && vuser.data.status === 1) {
             const rolUsuario = String(vuser.data.rol || '').toLowerCase().trim();
-            if (rolUsuario === 'superadmin' || rolUsuario === 'admin' || rolUsuario === 'administrador') {
+            if (['superadmin', 'admin', 'administrador'].includes(rolUsuario)) {
                 window.location.href = "VistaInicio.php?login=success";
             } else {
                 window.location.href = "VistaEscaner.php?login=success";
@@ -151,7 +159,7 @@ async function procesarLogin(e) {
 }
 
 /* =========================================================================
-   MÓDULO 2: TURNOS (CRUD)
+   MÓDULO 2: TURNOS
    ========================================================================= */
 async function cargarTarjetasTurnos() {
     const contenedor = document.getElementById('contenedor-turnos');
@@ -212,6 +220,7 @@ function abrirModalTurno() {
     if (document.getElementById('formTurno')) document.getElementById('formTurno').reset();
     if (document.getElementById('turno_id')) document.getElementById('turno_id').value = '';
     if (document.getElementById('tituloModalTurno')) document.getElementById('tituloModalTurno').innerHTML = '<i class="bi bi-clock-history me-2"></i> Registrar Nuevo Turno';
+
     const alerta = document.getElementById('alerta-calculo');
     if (alerta) {
         alerta.innerHTML = '<i class="bi bi-info-circle-fill me-2 fs-5"></i><span>Complete las horas.</span>';
@@ -240,10 +249,16 @@ async function guardarTurno() {
     if (!nombre || !hora_entrada || !hora_salida) {
         mostrarNotificacion("Por favor completa todos los campos del turno.", "warning"); return;
     }
+
     const datos = { nombre, hora_entrada, hora_salida };
     let respuesta;
-    if (id) { datos.id = id; respuesta = await apiTurnos.updateTurno(datos); } 
-    else { respuesta = await apiTurnos.createTurno(datos); }
+
+    if (id) {
+        datos.id = id;
+        respuesta = await apiTurnos.updateTurno(datos);
+    } else {
+        respuesta = await apiTurnos.createTurno(datos);
+    }
 
     if (respuesta.status === 1) {
         mostrarNotificacion(id ? "Turno actualizado exitosamente." : "Turno creado exitosamente.", "success");
@@ -297,21 +312,27 @@ function calcularHorasUI(entradaVal, salidaVal) {
 function generarCodigoAutomatico() {
     const rutInput = document.getElementById('enrolar_rut');
     if (!rutInput) return;
+
     const inputCodigo = document.getElementById('enrolar_codigo');
     const svgBarcode = document.getElementById('barcode');
     const placeholder = document.getElementById('barcode-placeholder');
 
     if (rutInput.value.trim() === '') {
-        inputCodigo.value = ''; inputCodigo.dataset.sufijo = '';
-        svgBarcode.style.display = 'none'; placeholder.style.display = 'block';
+        inputCodigo.value = '';
+        inputCodigo.dataset.sufijo = '';
+        svgBarcode.style.display = 'none';
+        placeholder.style.display = 'block';
         return;
     }
 
     let rutLimpio = rutInput.value.replace(/[^0-9kK]/gi, '');
     if (rutLimpio.length > 2) {
-        if (!inputCodigo.dataset.sufijo) { inputCodigo.dataset.sufijo = Math.floor(10000 + Math.random() * 90000); }
+        if (!inputCodigo.dataset.sufijo) {
+            inputCodigo.dataset.sufijo = Math.floor(10000 + Math.random() * 90000);
+        }
         let codigoFinal = rutLimpio + inputCodigo.dataset.sufijo;
         inputCodigo.value = codigoFinal;
+
         if (typeof JsBarcode !== 'undefined') {
             JsBarcode("#barcode", codigoFinal, { format: "CODE128", lineColor: "#212529", width: 2, height: 70, displayValue: false, margin: 0 });
         }
@@ -321,7 +342,9 @@ function generarCodigoAutomatico() {
 }
 
 async function guardarNuevoFuncionario() {
-    const rut = document.getElementById('enrolar_rut').value.trim();
+    const rutCrudo = document.getElementById('enrolar_rut').value.trim();
+    const rutLimpio = rutCrudo.replace(/[\.\-]/g, '');
+
     const nombres = document.getElementById('enrolar_nombres').value.trim();
     const ap_paterno = document.getElementById('enrolar_ap_paterno').value.trim();
     const ap_materno = document.getElementById('enrolar_ap_materno').value.trim();
@@ -329,10 +352,11 @@ async function guardarNuevoFuncionario() {
     const turno = document.getElementById('enrolar_turno').value;
     const codigo = document.getElementById('enrolar_codigo').value;
 
-    if (!rut || !nombres || !ap_paterno || !seccion || !turno || !codigo) {
+    if (!rutLimpio || !nombres || !ap_paterno || !seccion || !turno || !codigo) {
         mostrarNotificacion("Por favor, completa todos los campos obligatorios.", "warning"); return;
     }
-    const datos = { rut, nombre: nombres, apellidoP: ap_paterno, apellidoM: ap_materno, seccion, turno, codigo_tarjeta: codigo };
+
+    const datos = { rut: rutLimpio, nombre: nombres, apellidoP: ap_paterno, apellidoM: ap_materno, seccion, turno, codigo_tarjeta: codigo };
     const respuesta = await apiFuncionarios.createFuncionario(datos);
 
     if (respuesta.status === 1) {
@@ -350,27 +374,35 @@ async function guardarNuevoFuncionario() {
 async function cargarSelectTurnosEnrolar() {
     const select = document.getElementById('enrolar_turno');
     if (!select) return;
+
     const respuesta = await apiTurnos.getTurnos();
     if (respuesta.status === 1 && respuesta.data && respuesta.data.length > 0) {
         select.innerHTML = '<option value="" selected disabled>Seleccione un turno...</option>';
         respuesta.data.forEach(turno => {
             select.innerHTML += `<option value="${turno.IDturno}">${turno.nombre} (${turno.hora_entrada.substring(0, 5)} a ${turno.hora_salida.substring(0, 5)})</option>`;
         });
-    } else { select.innerHTML = '<option value="" selected disabled>No hay turnos creados</option>'; }
+    } else {
+        select.innerHTML = '<option value="" selected disabled>No hay turnos creados</option>';
+    }
 }
 
 async function cargarSelectSeccionesEnrolar() {
     const select = document.getElementById('enrolar_seccion');
     if (!select) return;
+
     const respuesta = await apiSecciones.getSecciones();
     if (respuesta.status === 1 && respuesta.data && respuesta.data.length > 0) {
         select.innerHTML = '<option value="" selected disabled>Seleccione una sección...</option>';
-        respuesta.data.forEach(sec => { select.innerHTML += `<option value="${sec.id}">${sec.nombre}</option>`; });
-    } else { select.innerHTML = '<option value="" selected disabled>No hay secciones creadas</option>'; }
+        respuesta.data.forEach(sec => {
+            select.innerHTML += `<option value="${sec.id}">${sec.nombre}</option>`;
+        });
+    } else {
+        select.innerHTML = '<option value="" selected disabled>No hay secciones creadas</option>';
+    }
 }
 
 /* =========================================================================
-   MÓDULO 4: FUNCIONARIOS Y ASISTENCIA (RESPONSIVE Y ESTÉTICO)
+   MÓDULO 4: FUNCIONARIOS Y ASISTENCIA
    ========================================================================= */
 async function cargarListaFuncionarios() {
     const contenedor = document.getElementById('contenedor-funcionarios');
@@ -386,7 +418,6 @@ async function cargarListaFuncionarios() {
             res.data.forEach(f => {
                 const safeId = f.rut.replace(/[^a-zA-Z0-9]/g, '');
                 const colId = `edit-func-${safeId}`;
-
                 const textoSeccion = f.nombre_seccion || 'Sin Sección';
                 const textoTurno = f.nombre_turno || 'Sin Turno';
 
@@ -409,7 +440,7 @@ async function cargarListaFuncionarios() {
                 contenedor.innerHTML += `
                 <div class="list-group-item p-0 funcionario-item border-start-danger shadow-sm mb-2 rounded">
                     <div class="row m-0 align-items-center py-3 px-3 bg-white fila-visible cursor-pointer" onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'calendario', event)">
-                        <div class="col-12 col-lg-2 ps-lg-3 mb-2 mb-lg-0 fw-semibold text-muted font-monospace">${f.rut}</div>
+                        <div class="col-12 col-lg-2 ps-lg-3 mb-2 mb-lg-0 fw-semibold text-muted font-monospace">${formatearRUT(f.rut)}</div>
                         <div class="col-12 col-lg-3 mb-2 mb-lg-0 text-black fw-bold text-truncate"><i class="bi bi-person-circle me-2 text-secondary"></i>${f.nombre} ${f.apellidoP}</div>
                         <div class="col-6 col-lg-3 text-truncate text-muted d-none d-md-block">${textoSeccion}</div>
                         <div class="col-6 col-lg-2 d-none d-md-block"><span class="badge bg-light text-dark border px-2 py-1"><i class="bi bi-clock me-1"></i>${textoTurno}</span></div>
@@ -435,6 +466,12 @@ async function cargarListaFuncionarios() {
                                         <div class="card-body p-4 d-flex flex-column h-100">
                                             <h5 class="fw-bold mb-4 text-blue-yb border-bottom pb-3"><i class="bi bi-pencil-square me-2"></i> Editar Información</h5>
                                             <form class="d-flex flex-column flex-grow-1">
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-bold text-muted text-uppercase">RUT (Sin puntos ni guión)</label>
+                                                    <input type="text" class="form-control fw-bold text-primary bg-light" id="edit_rut_nuevo_${f.rut}" value="${f.rut}">
+                                                </div>
+
                                                 <div class="mb-3">
                                                     <label class="form-label small fw-bold text-muted text-uppercase">Nombres</label>
                                                     <input type="text" class="form-control" id="edit_nom_${f.rut}" value="${f.nombre}">
@@ -494,30 +531,40 @@ async function cargarListaFuncionarios() {
         } else {
             contenedor.innerHTML = '<div class="alert alert-warning text-center fw-bold shadow-sm p-4 m-3 fs-5">No hay funcionarios registrados.</div>';
         }
-    } catch (error) { console.error("Error cargando lista:", error); }
+    } catch (error) { 
+        console.error("Error cargando lista:", error); 
+    }
 }
+
+
+
 
 async function abrirPanelFuncionario(safeId, rutReal, modo, event) {
     if (event) event.stopPropagation();
     const collapseEl = document.getElementById(`edit-func-${safeId}`);
     const formCol = document.getElementById(`col-form-${safeId}`);
     const calCol = document.getElementById(`col-cal-${safeId}`);
-    if(!formCol || !calCol) return; 
+
+    if (!formCol || !calCol) return;
 
     if (modo === 'calendario') {
-        formCol.style.display = 'none'; calCol.className = 'col-12';
+        formCol.style.display = 'none';
+        calCol.className = 'col-12';
     } else {
-        formCol.style.display = 'block'; calCol.className = 'col-12 col-xl-8';
+        formCol.style.display = 'block';
+        calCol.className = 'col-12 col-xl-8';
     }
 
     await cargarDatosYDibujarCalendario(safeId, rutReal, fechaActualVisualizacion);
     const bsCollapse = bootstrap.Collapse.getInstance(collapseEl) || new bootstrap.Collapse(collapseEl, { toggle: false });
     const modoActual = collapseEl.getAttribute('data-modo-actual');
-    
+
     if (collapseEl.classList.contains('show') && modoActual === modo) {
-        bsCollapse.hide(); collapseEl.removeAttribute('data-modo-actual');
+        bsCollapse.hide();
+        collapseEl.removeAttribute('data-modo-actual');
     } else {
-        bsCollapse.show(); collapseEl.setAttribute('data-modo-actual', modo);
+        bsCollapse.show();
+        collapseEl.setAttribute('data-modo-actual', modo);
     }
 }
 
@@ -537,8 +584,9 @@ async function cambiarMes(direccion, safeId, rutReal) {
 
 async function cargarDatosYDibujarCalendario(safeId, rutReal, fecha) {
     const año = fecha.getFullYear();
-    const mes = fecha.getMonth() + 1; 
+    const mes = fecha.getMonth() + 1;
     const contenedor = document.getElementById(`calendario-simple-${safeId}`);
+
     if (contenedor) contenedor.innerHTML = '<div class="text-center py-5 my-5"><div class="spinner-border text-danger-yb" role="status"></div><p class="mt-2 text-muted fw-bold">Consultando asistencia...</p></div>';
 
     try {
@@ -546,9 +594,9 @@ async function cargarDatosYDibujarCalendario(safeId, rutReal, fecha) {
         const res = await req.json();
         const datosMes = res.status === 1 ? res.data : {};
         dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes);
-    } catch(e) {
+    } catch (e) {
         console.error("Error al cargar Calendario:", e);
-        dibujarCalendarioSimple(safeId, rutReal, fecha, {}); 
+        dibujarCalendarioSimple(safeId, rutReal, fecha, {});
     }
 }
 
@@ -557,6 +605,7 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
     const mes = fecha.getMonth();
     const mesAnioElemento = document.getElementById(`mes-anio-${safeId}`);
     if (mesAnioElemento) mesAnioElemento.innerText = `${nombresMeses[mes]} ${año}`;
+
     const contenedor = document.getElementById(`calendario-simple-${safeId}`);
     if (!contenedor) return;
 
@@ -579,18 +628,20 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
     }
 
     for (let dia = 1; dia <= totalDiasMes; dia++) {
-        const infoDia = datosMes[dia]; 
-        let bgClass = 'cal-day-empty'; 
+        const infoDia = datosMes[dia];
+        let bgClass = 'cal-day-empty';
         let contenidoCelda = `<div class="fw-bold text-center w-100 h-100 d-flex justify-content-center align-items-center numero-calendario">${dia}</div>`;
 
         if (infoDia) {
             bgClass = infoDia.estado === 'verde' ? 'cal-day-success' : 'cal-day-warning';
             totalMinutosMes += infoDia.minutos_totales || 0;
             let badgeExtra = '';
+
             if (infoDia.extra !== '00:00') {
                 let colorExtra = infoDia.tipo_extra === 'Nocturna' ? 'bg-dark' : 'bg-primary';
                 badgeExtra = `<div class="mt-1"><span class="badge ${colorExtra} w-100" style="font-size:0.6rem;">+${infoDia.extra}</span></div>`;
             }
+
             contenidoCelda = `
                 <div class="p-1 p-md-2 w-100 d-flex flex-column h-100 text-start texto-calendario" style="font-size: 0.75rem;">
                     <div class="fw-bold text-end mb-1 numero-calendario fs-6">${dia}</div>
@@ -606,6 +657,7 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
 
     let totalHrs = Math.floor(totalMinutosMes / 60);
     let totalMins = totalMinutosMes % 60;
+
     htmlCalendario += `
         <div class="alert alert-secondary mt-auto mb-0 py-2 d-flex flex-column flex-md-row justify-content-between align-items-md-center fw-bold shadow-sm border-0 mt-4">
             <span class="mb-2 mb-md-0"><i class="bi bi-clock-history me-2"></i>Total Horas ${nombresMeses[mes]}:</span>
@@ -615,18 +667,23 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
     contenedor.innerHTML = htmlCalendario;
 }
 
-async function guardarEdicionFuncionario(rut) {
+async function guardarEdicionFuncionario(rutOriginal) {
+    const rutNuevoLimpio = document.getElementById(`edit_rut_nuevo_${rutOriginal}`).value.replace(/[\.\-]/g, '').trim();
+
     const datos = {
-        rut: rut,
-        nombre: document.getElementById(`edit_nom_${rut}`).value,
-        apellidoP: document.getElementById(`edit_ap_${rut}`).value,
-        apellidoM: document.getElementById(`edit_am_${rut}`).value,
-        departamento: document.getElementById(`edit_depto_${rut}`).value,
-        turno: document.getElementById(`edit_turno_${rut}`).value
+        rut_original: rutOriginal,
+        rut_nuevo: rutNuevoLimpio,
+        nombre: document.getElementById(`edit_nom_${rutOriginal}`).value,
+        apellidoP: document.getElementById(`edit_ap_${rutOriginal}`).value,
+        apellidoM: document.getElementById(`edit_am_${rutOriginal}`).value,
+        departamento: document.getElementById(`edit_depto_${rutOriginal}`).value,
+        turno: document.getElementById(`edit_turno_${rutOriginal}`).value
     };
+
     const res = await apiFuncionarios.updateFuncionario(datos);
     if (res.status === 1) {
         mostrarNotificacion("Funcionario actualizado con éxito", "success");
+        cerrarPanelFuncionario(rutOriginal.replace(/[^a-zA-Z0-9]/g, ''));
         cargarListaFuncionarios();
     } else {
         mostrarNotificacion("Error: " + res.message, "error");
@@ -641,14 +698,14 @@ function confirmarBorradoFuncionario(rut) {
 }
 
 function generarReporteMensual(rutFuncionario) {
-    const mesActual = fechaActualVisualizacion.getMonth() + 1; 
+    const mesActual = fechaActualVisualizacion.getMonth() + 1;
     const anioActual = fechaActualVisualizacion.getFullYear();
     const url = `../../controller/reporte_controller.php?rut=${rutFuncionario}&mes=${mesActual}&anio=${anioActual}`;
     window.open(url, '_blank');
 }
 
 /* =========================================================================
-   MÓDULO 5: SECCIONES (CRUD)
+   MÓDULO 5: SECCIONES
    ========================================================================= */
 async function cargarListaSecciones() {
     const contenedor = document.getElementById('contenedor-secciones');
@@ -701,9 +758,13 @@ async function guardarSeccion() {
     const nombre = document.getElementById('seccion_nombre').value.trim();
 
     if (!nombre) { mostrarNotificacion("El nombre de la sección no puede estar vacío.", "warning"); return; }
+
     let res;
-    if (id) { res = await apiSecciones.updateSeccion(id, nombre); } 
-    else { res = await apiSecciones.createSeccion(nombre); }
+    if (id) {
+        res = await apiSecciones.updateSeccion(id, nombre);
+    } else {
+        res = await apiSecciones.createSeccion(nombre);
+    }
 
     if (res.status === 1) {
         mostrarNotificacion(id ? "Sección actualizada." : "Sección creada exitosamente.", "success");
@@ -723,13 +784,14 @@ function editarSeccion(id, nombre) {
 }
 
 function confirmarBorrarSeccion(id) {
-    seccionABorrarId = id; funcionarioAborrarId = null;
+    seccionABorrarId = id;
+    funcionarioAborrarId = null;
     const modal = new bootstrap.Modal(document.getElementById('modalBorrar'));
     modal.show();
 }
 
 /* =========================================================================
-   MÓDULO 7: TERMINAL DE ESCÁNER (RELOJ Y LECTURA)
+   MÓDULO 6: TERMINAL DE ESCÁNER (RELOJ Y CÁMARAS)
    ========================================================================= */
 function actualizarRelojYFecha() {
     const reloj = document.getElementById('reloj-digital');
@@ -759,6 +821,7 @@ if (document.getElementById('reloj-digital')) {
     });
 }
 
+// Lógica de Cámara de Escaneo QR/Barras
 let html5QrcodeScanner = null;
 
 function toggleCamaraEscaner() {
@@ -790,75 +853,99 @@ function toggleCamaraEscaner() {
 
 function onScanSuccess(decodedText, decodedResult) {
     const inputCodigo = document.getElementById('codigo_tarjeta');
-    inputCodigo.value = decodedText;
-
-    const formEscaner = document.getElementById('form_marcar_asistencia');
-    formEscaner.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-
-    html5QrcodeScanner.pause();
-    setTimeout(() => {
-        if (html5QrcodeScanner && html5QrcodeScanner.getState() === Html5QrcodeScannerState.PAUSED) {
-            html5QrcodeScanner.resume();
+    if (inputCodigo) {
+        inputCodigo.value = decodedText;
+        formEscaner = document.getElementById('form_marcar_asistencia');
+        if (formEscaner) {
+            formEscaner.dispatchEvent(new Event('submit'));
         }
-    }, 3000);
+    }
 }
 
 function onScanFailure(error) {
-    // Ignoramos los errores de frame vacío
+    // Silenciar errores de lectura vacía
 }
 
-const formEscaner = document.getElementById('form_marcar_asistencia');
-if (formEscaner) {
-    formEscaner.addEventListener('submit', async (e) => {
-        e.preventDefault(); 
-        
-        const inputCodigo = document.getElementById('codigo_tarjeta');
-        const tipoSeleccionado = document.querySelector('input[name="tipo_marca"]:checked').value;
-        const alerta = document.getElementById('alertaAsistencia');
+// Lógica de Cámara de Seguridad (Anti-Fraude)
+const videoSeguridad = document.getElementById('videoSeguridad');
+const canvasSeguridad = document.getElementById('canvasSeguridad');
 
-        const codigo = inputCodigo.value.trim();
-        
-        if (!codigo) {
-            alert("Por favor, ingrese o escanee un código de credencial válido.");
+if (videoSeguridad) {
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { videoSeguridad.srcObject = stream; })
+        .catch(err => console.log("Cámara de seguridad no disponible:", err));
+}
+
+const formEscanerGlobal = document.getElementById('form_marcar_asistencia');
+if (formEscanerGlobal) {
+    formEscanerGlobal.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const inputCodigo = document.getElementById('codigo_tarjeta');
+        const alerta = document.getElementById('alertaAsistencia');
+        const radioSeleccionado = document.querySelector('input[name="tipo_marca"]:checked');
+
+        if (!radioSeleccionado) {
+            alert("⚠️ ¡ALTO! Debe presionar obligatoriamente el botón de ENTRADA o SALIDA antes de escanear su credencial.");
+            inputCodigo.value = '';
+            inputCodigo.focus();
             return;
         }
-        if (codigo.length < 8) {
-            alert("El código es muy corto o inválido. Verifique su credencial.");
-            inputCodigo.value = ''; 
+
+        const tipoSeleccionado = radioSeleccionado.value;
+        const codigo = inputCodigo.value.trim();
+
+        if (!codigo || codigo.length < 8) {
+            alert("Código inválido. Verifique su credencial.");
+            inputCodigo.value = '';
             return;
+        }
+
+        let fotoBase64 = "";
+        if (videoSeguridad && videoSeguridad.srcObject) {
+            const ctx = canvasSeguridad.getContext('2d');
+            ctx.drawImage(videoSeguridad, 0, 0, canvasSeguridad.width, canvasSeguridad.height);
+            fotoBase64 = canvasSeguridad.toDataURL('image/jpeg', 0.8);
         }
 
         alerta.style.display = 'none';
-        
+
         try {
             const req = await fetch('../../controller/asistencia_controller.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'registrarMarca', codigo: codigo, tipo: tipoSeleccionado })
+                body: JSON.stringify({
+                    action: 'registrarMarca',
+                    codigo: codigo,
+                    tipo: tipoSeleccionado,
+                    foto: fotoBase64
+                })
             });
-            const res = await req.json();
 
+            const res = await req.json();
             alerta.style.display = 'block';
+
             if (res.status === 1) {
                 alerta.className = 'alert alert-success fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
                 alerta.innerHTML = `<i class="bi bi-check-circle-fill me-2 fs-3 align-middle"></i> ${res.message}`;
+                radioSeleccionado.checked = false;
             } else {
                 alerta.className = 'alert alert-danger fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
                 alerta.innerHTML = `<i class="bi bi-x-circle-fill me-2 fs-3 align-middle"></i> ${res.message}`;
             }
-        } catch(error) {
+
+        } catch (error) {
             console.error("Error al registrar:", error);
-            alerta.style.display = 'block';
-            alerta.className = 'alert alert-danger fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
-            alerta.innerHTML = `<i class="bi bi-x-circle-fill me-2 fs-3 align-middle"></i> Error de conexión con el servidor.`;
         }
 
         inputCodigo.value = '';
         inputCodigo.focus();
-        setTimeout(() => { alerta.style.display = 'none'; }, 4000);
+
+        setTimeout(() => {
+            alerta.style.display = 'none';
+        }, 4000);
     });
 }
-
 
 /* =========================================================================
    MÓDULO 7: GESTIÓN DE USUARIOS
@@ -888,7 +975,9 @@ async function cargarListaUsuarios() {
                 </td>
             </tr>`;
         });
-    } else { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No se encontraron usuarios.</td></tr>'; }
+    } else {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No se encontraron usuarios.</td></tr>';
+    }
 }
 
 function abrirModalUsuario() {
@@ -899,7 +988,7 @@ function abrirModalUsuario() {
     if (document.getElementById('textoTituloModal')) document.getElementById('textoTituloModal').innerText = 'Registrar Nuevo Usuario';
     if (document.getElementById('hint-password')) document.getElementById('hint-password').style.display = 'none';
     if (document.getElementById('usuario_password')) document.getElementById('usuario_password').required = true;
-    
+
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
 }
@@ -928,16 +1017,26 @@ async function guardarUsuario() {
         estado: document.getElementById('usuario_estado').value
     };
 
-    if (!datos.nombre || !datos.login) { mostrarNotificacion("El nombre y el login son obligatorios.", "warning"); return; }
+    if (!datos.nombre || !datos.login) {
+        mostrarNotificacion("El nombre y el login son obligatorios.", "warning");
+        return;
+    }
+
     let res;
-    if (id) { datos.id = id; res = await apiUsuarios.updateUsuario(datos); } 
-    else { res = await apiUsuarios.createUsuario(datos); }
+    if (id) {
+        datos.id = id;
+        res = await apiUsuarios.updateUsuario(datos);
+    } else {
+        res = await apiUsuarios.createUsuario(datos);
+    }
 
     if (res.status === 1) {
         mostrarNotificacion("Usuario guardado exitosamente.", "success");
         bootstrap.Modal.getInstance(document.getElementById('modalFormUsuario')).hide();
         cargarListaUsuarios();
-    } else { mostrarNotificacion("Error: " + res.message, "error"); }
+    } else {
+        mostrarNotificacion("Error: " + res.message, "error");
+    }
 }
 
 function abrirModalBorrarUsuario(id) {
@@ -953,7 +1052,9 @@ async function ejecutarBorrarUsuario() {
         mostrarNotificacion("Usuario eliminado con éxito.", "delete");
         bootstrap.Modal.getInstance(document.getElementById('modalBorrarUsuario')).hide();
         cargarListaUsuarios();
-    } else { mostrarNotificacion("Error al eliminar: " + res.message, "error"); }
+    } else {
+        mostrarNotificacion("Error al eliminar: " + res.message, "error");
+    }
 }
 
 /* =========================================================================
@@ -969,12 +1070,15 @@ async function cargarEstadisticasDashboard() {
             document.getElementById('dash-atrasos').innerHTML = res.data.atrasos_hoy;
             document.getElementById('dash-licencias').innerHTML = res.data.licencias_activas;
         } else {
-            mostrarCerosDashboard(); mostrarNotificacion("Error al cargar estadísticas: " + res.message, "warning");
+            mostrarCerosDashboard();
+            mostrarNotificacion("Error al cargar estadísticas: " + res.message, "warning");
         }
     } catch (error) {
-        mostrarCerosDashboard(); mostrarNotificacion("Error crítico al conectar con el servidor.", "error");
+        mostrarCerosDashboard();
+        mostrarNotificacion("Error crítico al conectar con el servidor.", "error");
     }
 }
+
 function mostrarCerosDashboard() {
     document.getElementById('dash-total-func').innerHTML = '0';
     document.getElementById('dash-presentes').innerHTML = '0';
@@ -983,7 +1087,7 @@ function mostrarCerosDashboard() {
 }
 
 /* =========================================================================
-   MÓDULO 9: FUNCIÓN GLOBAL DE BORRADO EN MODALES UNIFICADOS
+   MÓDULO 9: FUNCIÓN GLOBAL DE BORRADO
    ========================================================================= */
 async function ejecutarBorrado() {
     const modalEl = document.getElementById('modalBorrar');
@@ -998,18 +1102,93 @@ async function ejecutarBorrado() {
             if (res.status === 1) {
                 mostrarNotificacion("Funcionario eliminado correctamente.", "delete");
                 cargarListaFuncionarios();
-            } else { mostrarNotificacion("No se pudo eliminar: " + res.message, "error"); }
-        } catch (error) { mostrarNotificacion("Error de conexión al eliminar.", "error"); }
-        funcionarioAborrarId = null; 
-    } 
+            } else {
+                mostrarNotificacion("No se pudo eliminar: " + res.message, "error");
+            }
+        } catch (error) {
+            mostrarNotificacion("Error de conexión al eliminar.", "error");
+        }
+        funcionarioAborrarId = null;
+    }
     else if (typeof seccionABorrarId !== 'undefined' && seccionABorrarId !== null) {
         try {
             const res = await apiSecciones.deleteSeccion(seccionABorrarId);
             if (res.status === 1) {
                 mostrarNotificacion("Sección eliminada correctamente.", "delete");
                 if (typeof cargarListaSecciones === "function") cargarListaSecciones();
-            } else { mostrarNotificacion("Error al eliminar la sección: " + res.message, "error"); }
-        } catch (error) { mostrarNotificacion("Error de conexión al eliminar.", "error"); }
+            } else {
+                mostrarNotificacion("Error al eliminar la sección: " + res.message, "error");
+            }
+        } catch (error) {
+            mostrarNotificacion("Error de conexión al eliminar.", "error");
+        }
         seccionABorrarId = null;
     }
 }
+
+
+const formImportar = document.getElementById('form-importar-csv');
+if (formImportar) {
+    formImportar.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btn-importar');
+        const fileInput = document.getElementById('archivo_csv');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+
+        const formData = new FormData();
+        formData.append('action', 'importar');
+        formData.append('archivo_csv', fileInput.files[0]);
+
+        try {
+            const req = await fetch('../../controller/migracion_controller.php', {
+                method: 'POST',
+                body: formData
+            });
+            const res = await req.json();
+
+            if (res.status === 1) {
+                mostrarNotificacion(res.message, "success");
+                bootstrap.Modal.getInstance(document.getElementById('modalMigracion')).hide();
+                if (typeof cargarListaFuncionarios === 'function') cargarListaFuncionarios();
+            } else {
+                mostrarNotificacion(res.message, "error");
+            }
+        } catch (error) {
+            mostrarNotificacion("Error de conexión.", "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-database-add me-2"></i> Procesar Archivo';
+        }
+    });
+}
+
+
+function inicializarBuscadorUniversal(idInput, idContenedor, selectorFila) {
+    const input = document.getElementById(idInput);
+    const contenedor = document.getElementById(idContenedor);
+
+    if (!input || !contenedor) return;
+
+    input.addEventListener('input', function () {
+        const termino = this.value.toLowerCase().trim();
+        const filas = contenedor.querySelectorAll(selectorFila);
+
+        filas.forEach(fila => {
+            const contenido = fila.textContent.toLowerCase();
+
+            if (contenido.includes(termino)) {
+                fila.style.setProperty('display', 'flex', 'important');
+            } else {
+                fila.style.setProperty('display', 'none', 'important');
+            }
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarBuscadorUniversal('buscador-funcionarios', 'contenedor-funcionarios', '.list-group-item');
+    inicializarBuscadorUniversal('buscar-secciones', 'contenedor-secciones', '.list-group-item');
+    inicializarBuscadorUniversal('buscar-turnos', 'contenedor-turnos', '.list-group-item');
+});

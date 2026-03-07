@@ -16,10 +16,8 @@ try {
             break;
 
         case 'createFuncionario':
-            // 1. Atrapamos el código de la credencial que envía JavaScript
             $codigoCredencial = isset($data['codigo_tarjeta']) ? $data['codigo_tarjeta'] : $data['rut'] . rand(10000, 99999);
 
-            // 2. Pasamos los 7 argumentos EXACTOS que espera la clase
             Funcionario::crear(
                 $data['rut'], 
                 $data['nombre'], 
@@ -27,14 +25,15 @@ try {
                 $data['apellidoM'] ?? '', 
                 $data['seccion'], 
                 $data['turno'],
-                $codigoCredencial // <--- ¡AQUÍ ESTÁ EL SÉPTIMO DATO FALTANTE!
+                $codigoCredencial 
             );
             echo json_encode(['status' => 1, 'message' => 'Funcionario enrolado con éxito.']);
             break;
 
         case 'updateFuncionario':
             Funcionario::actualizar(
-                $data['rut'], 
+                $data['rut_original'], 
+                $data['rut_nuevo'], 
                 $data['nombre'], 
                 $data['apellidoP'], 
                 $data['apellidoM'], 
@@ -43,7 +42,7 @@ try {
             );
             echo json_encode(['status' => 1, 'message' => 'Funcionario actualizado con éxito.']);
             break;
-
+            
         case 'deleteFuncionario':
             $rutAEliminar = $data['rut'] ?? $data['id'] ?? '';
             

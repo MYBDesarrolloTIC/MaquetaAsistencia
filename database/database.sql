@@ -28,7 +28,7 @@ CREATE TABLE usuarios (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO usuarios (nombre_usuario, password_hash, Rol) 
-VALUES ('jefe_rrhh', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'superadmin');
+VALUES ('pablito', 'pablitopro', 'superadmin');
 
 -- TABLA FUNCIONARIOS ACTUALIZADA (Con codigo_tarjeta y tipo_contrato)
 CREATE TABLE funcionarios (

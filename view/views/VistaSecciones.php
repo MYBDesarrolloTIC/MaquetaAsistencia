@@ -10,6 +10,7 @@
             <i class="bi bi-plus-circle me-2"></i> Nueva Sección
         </button>
     </div>
+    
 </div>
 
 <div class="row g-4" id="contenedor-secciones"></div>
@@ -28,13 +29,15 @@
                     <input type="hidden" id="seccion_id" value="">
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">Nombre de la Sección</label>
-                        <input type="text" class="form-control" id="seccion_nombre" placeholder="Ej. DIDECO, Tránsito, Salud..." required>
+                        <input type="text" class="form-control" id="seccion_nombre"
+                            placeholder="Ej. DIDECO, Tránsito, Salud..." required>
                     </div>
                 </form>
             </div>
             <div class="modal-footer border-top-0 pt-0 bg-light p-4">
                 <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn text-white fw-bold px-4" style="background-color: var(--yb-blue);" onclick="guardarSeccion()">
+                <button type="button" class="btn text-white fw-bold px-4" style="background-color: var(--yb-blue);"
+                    onclick="guardarSeccion()">
                     <i class="bi bi-check-circle me-1"></i> Guardar
                 </button>
             </div>
@@ -46,7 +49,8 @@
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-top-danger-yb">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title text-black fw-bold"><i class="bi bi-exclamation-triangle-fill text-danger-yb me-2"></i>Atención</h5>
+                <h5 class="modal-title text-black fw-bold"><i
+                        class="bi bi-exclamation-triangle-fill text-danger-yb me-2"></i>Atención</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center py-4">
@@ -55,7 +59,9 @@
             </div>
             <div class="modal-footer border-0 bg-light justify-content-center">
                 <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger fw-bold" style="background-color: var(--yb-red); border-color: var(--yb-red);" onclick="ejecutarBorrado()">Sí, Eliminar</button>
+                <button type="button" class="btn btn-danger fw-bold"
+                    style="background-color: var(--yb-red); border-color: var(--yb-red);"
+                    onclick="ejecutarBorrado()">Sí, Eliminar</button>
             </div>
         </div>
     </div>
