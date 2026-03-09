@@ -51,17 +51,19 @@ CREATE TABLE asistencia (
     fecha DATE NOT NULL,
     hora TIME NOT NULL,
     tipo_marca ENUM('entrada', 'salida') NOT NULL,
+    foto_seguridad LONGTEXT NULL,
     FOREIGN KEY (rut_funcionario) REFERENCES funcionarios(rut) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE ausencia_permiso (
-    idAusencia INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     rut_funcionario VARCHAR(20) NOT NULL,
     tipo VARCHAR(50) NOT NULL,
-    fechaInicio DATETIME NOT NULL,
-    fechaFIN DATETIME NOT NULL,
-    FOREIGN KEY (rut_funcionario) REFERENCES funcionarios(rut) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+    fechaInicio DATE NOT NULL,
+    fechaFIN DATE NOT NULL,
+    observacion TEXT,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE reportes_historicos (
     id INT AUTO_INCREMENT PRIMARY KEY,
