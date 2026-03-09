@@ -744,7 +744,7 @@ function verDetalleAsistencia(safeId, dia, mes, año) {
     if (estado === 'verde') {
         badge.className = 'badge bg-success rounded-pill px-3 py-1 fs-6 text-white';
         badge.innerText = 'Asistencia Completa';
-    } else if (estado === 'warning') {
+    } else if (estado === 'amarillo') {
         badge.className = 'badge bg-warning text-dark rounded-pill px-3 py-1 fs-6';
         badge.innerText = 'Asistencia Incompleta';
     } else if (estado === 'falta') {
@@ -1223,6 +1223,7 @@ if (formImportar) {
         formData.append('action', 'importar'); formData.append('archivo_csv', fileInput.files[0]);
         try {
             const req = await fetch('../../controller/migracion_controller.php', { method: 'POST', body: formData });
+            alert("JSON: ");
             const res = await req.json();
             if (res.status === 1) {
                 mostrarNotificacion(res.message, "success");

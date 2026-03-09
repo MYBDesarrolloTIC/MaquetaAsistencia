@@ -34,9 +34,9 @@ VALUES ('pablito', 'pablitopro', 'superadmin');
 CREATE TABLE funcionarios (
     rut VARCHAR(20) PRIMARY KEY, 
     codigo_tarjeta VARCHAR(50) NULL UNIQUE, -- Aquí está el código del escáner
-    nombre VARCHAR(50) NOT NULL,
-    apellidoP VARCHAR(50) NOT NULL,
-    apellidoM VARCHAR(50),
+    nombre VARCHAR(50) DEFAULT("Por enrolar"),
+    apellidoP VARCHAR(50) DEFAULT("Por enrolar"),
+    apellidoM VARCHAR(50) DEFAULT("Por enrolar"),
     IDseccion INT,
     IDturno INT,
     tipo_contrato ENUM('Estatuto Administrativo', 'Codigo del Trabajo') DEFAULT 'Estatuto Administrativo',
@@ -44,6 +44,11 @@ CREATE TABLE funcionarios (
     FOREIGN KEY (IDseccion) REFERENCES secciones(id) ON DELETE SET NULL,
     FOREIGN KEY (IDturno) REFERENCES turnos(IDturno) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+create table funcionarios_enrolar(
+    id_fn_enrolar INT AUTO_INCREMENT PRIMARY KEY,
+    rut VARCHAR(20) NOT NULL
+);
 
 CREATE TABLE asistencia (
     IDmarca INT AUTO_INCREMENT PRIMARY KEY,
