@@ -56,14 +56,14 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-top-danger-yb">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title text-black fw-bold"><i class="bi bi-file-medical text-danger-yb me-2"></i>Registrar Ausencia</h5>
+                <h5 class="modal-title text-black fw-bold"><i class="bi bi-file-medical text-danger-yb me-2"></i>Registrar Licencia</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <form id="formAusencia">
                     <input type="hidden" id="ausencia_rut">
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted text-uppercase">Tipo de Ausencia</label>
+                        <label class="form-label fw-bold small text-muted text-uppercase">Tipo de Licencia</label>
                         <select class="form-select" id="ausencia_tipo" required>
                             <option value="" selected disabled>Seleccione...</option>
                             <option value="Licencia Médica">Licencia Médica</option>
