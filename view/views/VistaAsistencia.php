@@ -98,4 +98,55 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalDetalleDia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-top-danger-yb">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-black fw-bold"><i class="bi bi-calendar-day text-danger-yb me-2"></i>Detalle del Día</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 pt-3">
+                
+                <div class="text-center mb-4">
+                    <h4 class="fw-bold text-black mb-1" id="detalle_fecha">--</h4>
+                    <span id="detalle_estado_badge" class="badge bg-secondary rounded-pill px-3 py-1 fs-6">Sin Registro</span>
+                </div>
+
+                <div id="detalle_caja_fotos" class="row justify-content-center text-center mb-4 d-none">
+                    
+                    <div class="col-6 d-none" id="col_foto_entrada">
+                        <small class="fw-bold text-muted d-block mb-2 text-uppercase">Entrada</small>
+                        <img id="detalle_img_entrada" src="" class="rounded-circle shadow-sm border border-3 border-success bg-white" style="width: 180px; height: 180px; object-fit: cover;">
+                    </div>
+                    
+                    <div class="col-6 d-none" id="col_foto_salida">
+                        <small class="fw-bold text-muted d-block mb-2 text-uppercase">Salida</small>
+                        <img id="detalle_img_salida" src="" class="rounded-circle shadow-sm border border-3 border-primary bg-white" style="width: 180px; height: 180px; object-fit: cover;">
+                    </div>
+
+                </div>
+
+                <ul class="list-group list-group-flush text-start">
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span class="text-muted fw-bold small text-uppercase">Entrada</span>
+                        <span class="fw-bold fs-5 text-dark" id="detalle_entrada">--:--</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span class="text-muted fw-bold small text-uppercase">Salida</span>
+                        <span class="fw-bold fs-5 text-dark" id="detalle_salida">--:--</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center" id="fila_extra" style="display: none !important;">
+                        <span class="text-muted fw-bold small text-uppercase">Horas Extras</span>
+                        <span class="fw-bold fs-5 text-primary" id="detalle_extra">+00:00</span>
+                    </li>
+                </ul>
+
+            </div>
+            <div class="modal-footer border-0 bg-light justify-content-center">
+                <button type="button" class="btn btn-secondary fw-bold w-100 py-2" data-bs-dismiss="modal">Cerrar Detalle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php include '../includes/footer.php'; ?>

@@ -6,24 +6,41 @@ let modalFormTurnoInstance = null;
 let modalBorrarTurnoInstance = null;
 let funcionarioAborrarId = null;
 let seccionABorrarId = null;
-let fechaActualVisualizacion = new Date(); 
+let fechaActualVisualizacion = new Date();
 
 const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
+// Objeto global seguro para guardar los datos del calendario y fotos sin romper el HTML
+window.calendarioData = window.calendarioData || {};
+
 /* =========================================================================
-   2. FUNCIÓN GLOBAL: NOTIFICACIONES (TOASTS)
+   2. FUNCIÓN GLOBAL: NOTIFICACIONES Y VALIDACIONES
    ========================================================================= */
 function formatearRUT(rut) {
     if (!rut) return '';
     let valorLimpio = String(rut).replace(/[^0-9kK]/g, '').toUpperCase();
     if (valorLimpio.length <= 1) return valorLimpio;
-
     let cuerpo = valorLimpio.slice(0, -1);
     let dv = valorLimpio.slice(-1);
-
     cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-
     return `${cuerpo}-${dv}`;
+}
+
+function validarRutChileno(rutCompleto) {
+    let rutLimpio = rutCompleto.replace(/[^0-9kK]/g, '').toUpperCase();
+    if (rutLimpio.length < 2) return false;
+    let cuerpo = rutLimpio.slice(0, -1);
+    let dv = rutLimpio.slice(-1);
+    let suma = 0;
+    let multiplo = 2;
+    for (let i = 1; i <= cuerpo.length; i++) {
+        let index = multiplo * cuerpo.charAt(cuerpo.length - i);
+        suma = suma + index;
+        if (multiplo < 7) { multiplo = multiplo + 1; } else { multiplo = 2; }
+    }
+    let dvEsperado = 11 - (suma % 11);
+    let dvCalculado = (dvEsperado === 11) ? "0" : (dvEsperado === 10) ? "K" : dvEsperado.toString();
+    return dvCalculado === dv;
 }
 
 function mostrarNotificacion(mensaje, tipo = 'success') {
@@ -35,7 +52,6 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
         container.style.zIndex = '9999';
         document.body.appendChild(container);
     }
-
     const config = {
         success: { bg: 'bg-success', icon: 'bi-check-circle-fill', text: 'text-white', close: 'btn-close-white' },
         error: { bg: 'bg-danger', icon: 'bi-x-circle-fill', text: 'text-white', close: 'btn-close-white' },
@@ -43,7 +59,6 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
         info: { bg: 'bg-primary', icon: 'bi-info-circle-fill', text: 'text-white', close: 'btn-close-white' },
         delete: { bg: 'bg-danger', icon: 'bi-trash-fill', text: 'text-white', close: 'btn-close-white' }
     };
-
     const current = config[tipo] || config.success;
     const toastEl = document.createElement('div');
     toastEl.className = `toast align-items-center border-0 shadow-lg mb-3 rounded-3 ${current.bg} ${current.text}`;
@@ -56,7 +71,6 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
             <button type="button" class="btn-close ${current.close} me-3 m-auto" data-bs-dismiss="toast"></button>
         </div>
     `;
-
     container.appendChild(toastEl);
     const bsToast = new bootstrap.Toast(toastEl, { delay: 4000 });
     bsToast.show();
@@ -67,14 +81,21 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
    3. INICIALIZACIÓN DEL DOCUMENTO
    ========================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
+    // MAGIA PARA LIBERAR MODALES
+    document.querySelectorAll('.modal').forEach(modal => {
+        document.body.appendChild(modal);
+    });
+
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('login') === 'success') {
         mostrarNotificacion("¡Inicio de sesión exitoso! Bienvenido.", "success");
         window.history.replaceState({}, document.title, window.location.pathname);
     }
+    
     inicializarBuscadorUniversal('buscar-secciones', 'contenedor-secciones', '.col-md-4, .col-lg-3');
     inicializarBuscadorUniversal('buscar-turnos', 'contenedor-turnos', '.col-md-4, .col-lg-3');
-    
+    inicializarBuscadorUniversal('buscador-funcionarios', 'contenedor-funcionarios', '.list-group-item');
+
     if (document.getElementById('dash-total-func')) cargarEstadisticasDashboard();
 
     const formLogin = document.getElementById("form_login");
@@ -352,7 +373,14 @@ async function guardarNuevoFuncionario() {
     const codigo = document.getElementById('enrolar_codigo').value;
 
     if (!rutLimpio || !nombres || !ap_paterno || !seccion || !turno || !codigo) {
-        mostrarNotificacion("Por favor, completa todos los campos obligatorios.", "warning"); return;
+        mostrarNotificacion("Por favor, completa todos los campos obligatorios.", "warning"); 
+        return;
+    }
+
+    if (!validarRutChileno(rutCrudo)) {
+        mostrarNotificacion("El RUT ingresado no es válido. Verifique que esté correcto.", "error");
+        document.getElementById('enrolar_rut').focus();
+        return; 
     }
 
     const datos = { rut: rutLimpio, nombre: nombres, apellidoP: ap_paterno, apellidoM: ap_materno, seccion, turno, codigo_tarjeta: codigo };
@@ -373,7 +401,6 @@ async function guardarNuevoFuncionario() {
 async function cargarSelectTurnosEnrolar() {
     const select = document.getElementById('enrolar_turno');
     if (!select) return;
-
     const respuesta = await apiTurnos.getTurnos();
     if (respuesta.status === 1 && respuesta.data && respuesta.data.length > 0) {
         select.innerHTML = '<option value="" selected disabled>Seleccione un turno...</option>';
@@ -388,7 +415,6 @@ async function cargarSelectTurnosEnrolar() {
 async function cargarSelectSeccionesEnrolar() {
     const select = document.getElementById('enrolar_seccion');
     if (!select) return;
-
     const respuesta = await apiSecciones.getSecciones();
     if (respuesta.status === 1 && respuesta.data && respuesta.data.length > 0) {
         select.innerHTML = '<option value="" selected disabled>Seleccione una sección...</option>';
@@ -401,7 +427,7 @@ async function cargarSelectSeccionesEnrolar() {
 }
 
 /* =========================================================================
-   MÓDULO 4: FUNCIONARIOS Y ASISTENCIA
+   MÓDULO 4: FUNCIONARIOS, CALENDARIO Y POPUP SEGURO
    ========================================================================= */
 async function cargarListaFuncionarios() {
     const contenedor = document.getElementById('contenedor-funcionarios');
@@ -508,13 +534,13 @@ async function cargarListaFuncionarios() {
                                             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center border-bottom pb-3 mb-4 gap-3">
                                                 <h5 class="fw-bold mb-0 text-blue-yb"><i class="bi bi-calendar-check me-2"></i> Registro de Asistencia</h5>
                                                 <div class="d-flex align-items-center gap-2">
-                                                    <div class="bg-light rounded p-1 d-flex align-items-center border">
+                                                    <div class="bg-light rounded p-1 d-flex align-items-center border me-2">
                                                         <button class="btn btn-sm btn-white border-0 fw-bold" onclick="cambiarMes(-1, '${safeId}', '${f.rut}')"><i class="bi bi-chevron-left"></i></button>
                                                         <span id="mes-anio-${safeId}" class="fw-bold text-uppercase px-3 text-center" style="min-width: 140px;"></span>
                                                         <button class="btn btn-sm btn-white border-0 fw-bold" onclick="cambiarMes(1, '${safeId}', '${f.rut}')"><i class="bi bi-chevron-right"></i></button>
                                                     </div>
                                                     
-                                                    <button class="btn btn-outline-primary fw-bold shadow-sm px-3 py-1 ms-2" style="height: 36px;" title="Registrar Ausencia" onclick="abrirModalAusencia('${f.rut}')">
+                                                    <button class="btn btn-outline-primary fw-bold shadow-sm px-3 py-1" style="height: 36px;" title="Registrar Ausencia" onclick="abrirModalAusencia('${f.rut}')">
                                                         <i class="bi bi-file-medical fs-5"></i>
                                                     </button>
                                                     
@@ -535,8 +561,8 @@ async function cargarListaFuncionarios() {
         } else {
             contenedor.innerHTML = '<div class="alert alert-warning text-center fw-bold shadow-sm p-4 m-3 fs-5">No hay funcionarios registrados.</div>';
         }
-    } catch (error) { 
-        console.error("Error cargando lista:", error); 
+    } catch (error) {
+        console.error("Error cargando lista:", error);
     }
 }
 
@@ -588,15 +614,21 @@ async function cargarDatosYDibujarCalendario(safeId, rutReal, fecha) {
     const mes = fecha.getMonth() + 1;
     const contenedor = document.getElementById(`calendario-simple-${safeId}`);
 
-    if (contenedor) contenedor.innerHTML = '<div class="text-center py-5 my-5"><div class="spinner-border text-danger-yb" role="status"></div><p class="mt-2 text-muted fw-bold">Consultando asistencia...</p></div>';
+    if (contenedor) contenedor.innerHTML = '<div class="text-center py-5 my-5"><div class="spinner-border text-danger-yb" role="status"></div></div>';
 
     try {
         const req = await fetch(`../../controller/asistencia_controller.php?action=getAsistencia&rut=${rutReal}&mes=${mes}&anio=${año}`);
         const res = await req.json();
         const datosMes = res.status === 1 ? res.data : {};
+        
+        // ¡LA MAGIA DE LA MEMORIA SEGURA!
+        window.calendarioData = window.calendarioData || {};
+        window.calendarioData[safeId] = datosMes;
+        
         dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes);
     } catch (e) {
-        console.error("Error al cargar Calendario:", e);
+        window.calendarioData = window.calendarioData || {};
+        window.calendarioData[safeId] = {};
         dibujarCalendarioSimple(safeId, rutReal, fecha, {});
     }
 }
@@ -630,24 +662,19 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
 
     for (let dia = 1; dia <= totalDiasMes; dia++) {
         const infoDia = datosMes[dia];
-        let bgClass = 'cal-day-empty';
+        let bgClass = 'cal-day-empty'; 
         let contenidoCelda = `<div class="fw-bold text-center w-100 h-100 d-flex justify-content-center align-items-center numero-calendario">${dia}</div>`;
 
         if (infoDia) {
             if (infoDia.estado === 'licencia') {
                 bgClass = 'cal-day-licencia';
-                contenidoCelda = `
-                    <div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center">
-                        <div class="fw-bold fs-6 mb-1">${dia}</div>
-                        <div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-bandaid"></i><br>Licencia</div>
-                    </div>`;
+                contenidoCelda = `<div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center"><div class="fw-bold fs-6 mb-1">${dia}</div><div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-bandaid"></i><br>Licencia</div></div>`;
             } else if (infoDia.estado === 'vacaciones') {
                 bgClass = 'cal-day-vacaciones';
-                contenidoCelda = `
-                    <div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center">
-                        <div class="fw-bold fs-6 mb-1">${dia}</div>
-                        <div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-airplane"></i><br>Feriado<br>Legal</div>
-                    </div>`;
+                contenidoCelda = `<div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center"><div class="fw-bold fs-6 mb-1">${dia}</div><div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-airplane"></i><br>Feriado</div></div>`;
+            } else if (infoDia.estado === 'falta') {
+                bgClass = 'dia-danger'; 
+                contenidoCelda = `<div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center"><div class="fw-bold fs-6 mb-1">${dia}</div><div class="fw-bold text-danger" style="font-size: 0.7rem;"><i class="bi bi-x-circle"></i><br>Ausente</div></div>`;
             } else {
                 bgClass = infoDia.estado === 'verde' ? 'cal-day-success' : 'cal-day-warning';
                 totalMinutosMes += infoDia.minutos_totales || 0;
@@ -661,14 +688,19 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
                 contenidoCelda = `
                     <div class="p-1 p-md-2 w-100 d-flex flex-column h-100 text-start texto-calendario" style="font-size: 0.75rem;">
                         <div class="fw-bold text-end mb-1 numero-calendario fs-6">${dia}</div>
-                        <div class="d-flex justify-content-between text-muted fw-semibold"><span>E:</span> <span class="text-dark">${infoDia.entrada}</span></div>
-                        <div class="d-flex justify-content-between text-muted fw-semibold mb-1"><span>S:</span> <span class="text-dark">${infoDia.salida}</span></div>
+                        <div class="d-flex justify-content-between align-items-center text-muted fw-semibold">
+                            <span>E:</span> <span class="text-dark">${infoDia.entrada}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center text-muted fw-semibold mb-1">
+                            <span>S:</span> <span class="text-dark">${infoDia.salida}</span>
+                        </div>
                         ${badgeExtra}
                     </div>
                 `;
             }
         }
-        htmlCalendario += `<div class="cal-day-box rounded-3 ${bgClass}" style="min-height: 85px;" title="Día ${dia}">${contenidoCelda}</div>`;
+        
+        htmlCalendario += `<div class="cal-day-box rounded-3 ${bgClass}" style="min-height: 85px; cursor: pointer; transition: transform 0.2s;" title="Ver detalle del día" onclick="verDetalleAsistencia('${safeId}', ${dia}, ${mes}, ${año})" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${contenidoCelda}</div>`;
     }
     htmlCalendario += `</div>`;
 
@@ -684,9 +716,95 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
     contenedor.innerHTML = htmlCalendario;
 }
 
+// ESTA ES LA FUNCIÓN NUEVA BLINDADA CONTRA ERRORES "UNDEFINED"
+function verDetalleAsistencia(safeId, dia, mes, año) {
+    const modalEl = document.getElementById('modalDetalleDia');
+    if (!modalEl) return;
+
+    // Lectura ultra-segura de la memoria
+    let datosDelMes = {};
+    if (window.calendarioData && window.calendarioData[safeId]) {
+        datosDelMes = window.calendarioData[safeId];
+    }
+    const infoDia = datosDelMes[dia] || {};
+
+    // Filtro estricto: forzamos valores por defecto si no existen
+    const estado = (infoDia.estado && String(infoDia.estado) !== "undefined") ? infoDia.estado : 'vacio';
+    const entrada = (infoDia.entrada && String(infoDia.entrada) !== "undefined") ? infoDia.entrada : '--:--';
+    const salida = (infoDia.salida && String(infoDia.salida) !== "undefined") ? infoDia.salida : '--:--';
+    const extra = (infoDia.extra && String(infoDia.extra) !== "undefined") ? infoDia.extra : '00:00';
+    const fotoEntrada = (infoDia.foto_entrada && String(infoDia.foto_entrada) !== "undefined") ? infoDia.foto_entrada : '';
+    const fotoSalida = (infoDia.foto_salida && String(infoDia.foto_salida) !== "undefined") ? infoDia.foto_salida : '';
+
+    // Colocar la fecha
+    document.getElementById('detalle_fecha').innerText = `${dia} de ${nombresMeses[mes]}, ${año}`;
+    
+    // Colocar el Badge (Etiqueta de estado)
+    const badge = document.getElementById('detalle_estado_badge');
+    if (estado === 'verde') {
+        badge.className = 'badge bg-success rounded-pill px-3 py-1 fs-6 text-white';
+        badge.innerText = 'Asistencia Completa';
+    } else if (estado === 'warning') {
+        badge.className = 'badge bg-warning text-dark rounded-pill px-3 py-1 fs-6';
+        badge.innerText = 'Asistencia Incompleta';
+    } else if (estado === 'falta') {
+        badge.className = 'badge bg-danger rounded-pill px-3 py-1 fs-6 text-white';
+        badge.innerText = 'Ausente (Falta)';
+    } else if (estado === 'licencia') {
+        badge.className = 'badge rounded-pill px-3 py-1 fs-6 text-white';
+        badge.style.backgroundColor = '#6f42c1';
+        badge.innerText = 'Licencia Médica';
+    } else if (estado === 'vacaciones') {
+        badge.className = 'badge rounded-pill px-3 py-1 fs-6 text-white';
+        badge.style.backgroundColor = '#087990';
+        badge.innerText = 'Feriado Legal';
+    } else {
+        badge.className = 'badge bg-secondary rounded-pill px-3 py-1 fs-6 text-white';
+        badge.innerText = 'Sin Registro';
+    }
+
+    // Encender/Apagar las cajas de fotos
+    const cajaFotos = document.getElementById('detalle_caja_fotos');
+    const imgE = document.getElementById('detalle_img_entrada');
+    const imgS = document.getElementById('detalle_img_salida');
+    const colE = document.getElementById('col_foto_entrada');
+    const colS = document.getElementById('col_foto_salida');
+
+    // Si la foto tiene contenido real, la mostramos
+    if (fotoEntrada.length > 50 || fotoSalida.length > 50) {
+        cajaFotos.classList.remove('d-none'); 
+        if (fotoEntrada.length > 50) {
+            imgE.src = fotoEntrada;
+            colE.classList.remove('d-none');
+        } else { colE.classList.add('d-none'); }
+
+        if (fotoSalida.length > 50) {
+            imgS.src = fotoSalida;
+            colS.classList.remove('d-none');
+        } else { colS.classList.add('d-none'); }
+    } else {
+        cajaFotos.classList.add('d-none'); // Ocultar bloque si NO hay fotos
+    }
+
+    // Colocar las horas de entrada y salida
+    document.getElementById('detalle_entrada').innerText = entrada;
+    document.getElementById('detalle_salida').innerText = salida;
+
+    // Mostrar horas extras si existen
+    const filaExtra = document.getElementById('fila_extra');
+    if (extra !== '00:00') {
+        filaExtra.style.setProperty('display', 'flex', 'important');
+        document.getElementById('detalle_extra').innerText = `+${extra} hrs`;
+    } else {
+        filaExtra.style.setProperty('display', 'none', 'important');
+    }
+
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
 async function guardarEdicionFuncionario(rutOriginal) {
     const rutNuevoLimpio = document.getElementById(`edit_rut_nuevo_${rutOriginal}`).value.replace(/[\.\-]/g, '').trim();
-
     const datos = {
         rut_original: rutOriginal,
         rut_nuevo: rutNuevoLimpio,
@@ -696,7 +814,6 @@ async function guardarEdicionFuncionario(rutOriginal) {
         departamento: document.getElementById(`edit_depto_${rutOriginal}`).value,
         turno: document.getElementById(`edit_turno_${rutOriginal}`).value
     };
-
     const res = await apiFuncionarios.updateFuncionario(datos);
     if (res.status === 1) {
         mostrarNotificacion("Funcionario actualizado con éxito", "success");
@@ -737,14 +854,8 @@ async function guardarAusencia() {
     const fin = document.getElementById('ausencia_fin').value;
     const obs = document.getElementById('ausencia_obs').value;
 
-    if (!tipo || !inicio || !fin) { 
-        mostrarNotificacion("Debe seleccionar el tipo y las fechas.", "warning"); 
-        return; 
-    }
-    if (inicio > fin) { 
-        mostrarNotificacion("La fecha de inicio no puede ser posterior al término.", "warning"); 
-        return; 
-    }
+    if (!tipo || !inicio || !fin) { mostrarNotificacion("Debe seleccionar el tipo y las fechas.", "warning"); return; }
+    if (inicio > fin) { mostrarNotificacion("La fecha de inicio no puede ser posterior al término.", "warning"); return; }
 
     try {
         const formData = new FormData();
@@ -763,12 +874,8 @@ async function guardarAusencia() {
             bootstrap.Modal.getInstance(document.getElementById('modalAusencia')).hide();
             const safeId = rut.replace(/[^a-zA-Z0-9]/g, '');
             await cargarDatosYDibujarCalendario(safeId, rut, fechaActualVisualizacion);
-        } else { 
-            mostrarNotificacion("Error: " + res.message, "error"); 
-        }
-    } catch (error) { 
-        mostrarNotificacion("Error de conexión al registrar.", "error"); 
-    }
+        } else { mostrarNotificacion("Error: " + res.message, "error"); }
+    } catch (error) { mostrarNotificacion("Error de conexión al registrar.", "error"); }
 }
 
 /* =========================================================================
@@ -823,24 +930,17 @@ function abrirModalNuevaSeccion() {
 async function guardarSeccion() {
     const id = document.getElementById('seccion_id').value;
     const nombre = document.getElementById('seccion_nombre').value.trim();
-
     if (!nombre) { mostrarNotificacion("El nombre de la sección no puede estar vacío.", "warning"); return; }
-
     let res;
-    if (id) {
-        res = await apiSecciones.updateSeccion(id, nombre);
-    } else {
-        res = await apiSecciones.createSeccion(nombre);
-    }
+    if (id) { res = await apiSecciones.updateSeccion(id, nombre); } 
+    else { res = await apiSecciones.createSeccion(nombre); }
 
     if (res.status === 1) {
         mostrarNotificacion(id ? "Sección actualizada." : "Sección creada exitosamente.", "success");
         const modalEl = document.getElementById('modalFormSeccion');
         if (modalEl) bootstrap.Modal.getInstance(modalEl).hide();
         cargarListaSecciones();
-    } else {
-        mostrarNotificacion("Error: " + res.message, "error");
-    }
+    } else { mostrarNotificacion("Error: " + res.message, "error"); }
 }
 
 function editarSeccion(id, nombre) {
@@ -856,22 +956,19 @@ function confirmarBorrarSeccion(id) {
     const modal = new bootstrap.Modal(document.getElementById('modalBorrar'));
     modal.show();
 }
+
 /* =========================================================================
-   MÓDULO 6: TERMINAL DE ESCÁNER (RELOJ Y CÁMARAS)
+   MÓDULO 6: TERMINAL DE ESCÁNER
    ========================================================================= */
 function actualizarRelojYFecha() {
     const reloj = document.getElementById('reloj-digital');
     const fechaDiv = document.getElementById('fecha-actual');
-
     if (!reloj || !fechaDiv) return;
-
     const ahora = new Date();
     const horas = String(ahora.getHours()).padStart(2, '0');
     const minutos = String(ahora.getMinutes()).padStart(2, '0');
     const segundos = String(ahora.getSeconds()).padStart(2, '0');
-
     reloj.textContent = `${horas}:${minutos}:${segundos}`;
-
     const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     let fechaFormateada = ahora.toLocaleDateString('es-ES', opcionesFecha);
     fechaDiv.textContent = fechaFormateada;
@@ -880,31 +977,21 @@ function actualizarRelojYFecha() {
 if (document.getElementById('reloj-digital')) {
     actualizarRelojYFecha();
     setInterval(actualizarRelojYFecha, 1000);
-
     document.addEventListener('click', function () {
         const inputScanner = document.getElementById('codigo_tarjeta');
         if (inputScanner) inputScanner.focus();
     });
 }
 
-// Lógica de Cámara de Escaneo QR/Barras
 let html5QrcodeScanner = null;
-
 function toggleCamaraEscaner() {
     const container = document.getElementById('reader-container');
     const btn = document.getElementById('btnToggleCamara');
-
     if (container.style.display === 'none') {
         container.style.display = 'block';
         btn.innerHTML = '<i class="bi bi-camera-video-off me-2"></i> Apagar Cámara';
         btn.classList.replace('btn-outline-secondary', 'btn-outline-danger');
-
-        html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: { width: 350, height: 150 }, formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128] },
-            false
-        );
-
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 350, height: 150 }, formatsToSupport: [Html5QrcodeSupportedFormats.CODE_128] }, false);
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     } else {
         if (html5QrcodeScanner) {
@@ -922,23 +1009,16 @@ function onScanSuccess(decodedText, decodedResult) {
     if (inputCodigo) {
         inputCodigo.value = decodedText;
         const formEscaner = document.getElementById('form_marcar_asistencia');
-        if (formEscaner) {
-            formEscaner.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-        }
+        if (formEscaner) { formEscaner.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })); }
     }
 }
+function onScanFailure(error) {}
 
-function onScanFailure(error) {
-    // Silenciar errores de lectura vacía
-}
-
-// Lógica de Cámara de Seguridad (Anti-Fraude)
 const videoSeguridad = document.getElementById('videoSeguridad');
 const canvasSeguridad = document.getElementById('canvasSeguridad');
-
 if (videoSeguridad) {
     navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => { videoSeguridad.srcObject = stream; })
+        .then(stream => { videoSeguridad.srcObject = stream; videoSeguridad.play(); })
         .catch(err => console.log("Cámara de seguridad no disponible:", err));
 }
 
@@ -946,15 +1026,12 @@ const formEscanerGlobal = document.getElementById('form_marcar_asistencia');
 if (formEscanerGlobal) {
     formEscanerGlobal.addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const inputCodigo = document.getElementById('codigo_tarjeta');
         const radioSeleccionado = document.querySelector('input[name="tipo_marca"]:checked');
 
         if (!radioSeleccionado) {
             mostrarNotificacion("⚠️ ¡ALTO! Debe presionar obligatoriamente el botón de ENTRADA o SALIDA.", "warning");
-            inputCodigo.value = '';
-            inputCodigo.focus();
-            return;
+            inputCodigo.value = ''; inputCodigo.focus(); return;
         }
 
         const tipoSeleccionado = radioSeleccionado.value;
@@ -962,45 +1039,35 @@ if (formEscanerGlobal) {
 
         if (!codigo || codigo.length < 8) {
             mostrarNotificacion("Código inválido. Verifique su credencial.", "warning");
-            inputCodigo.value = '';
-            return;
+            inputCodigo.value = ''; return;
         }
 
         let fotoBase64 = "";
-        if (videoSeguridad && videoSeguridad.srcObject) {
+        if (videoSeguridad && videoSeguridad.srcObject && videoSeguridad.readyState === 4) {
+            canvasSeguridad.width = videoSeguridad.videoWidth;
+            canvasSeguridad.height = videoSeguridad.videoHeight;
             const ctx = canvasSeguridad.getContext('2d');
             ctx.drawImage(videoSeguridad, 0, 0, canvasSeguridad.width, canvasSeguridad.height);
-            fotoBase64 = canvasSeguridad.toDataURL('image/jpeg', 0.8);
+            fotoBase64 = canvasSeguridad.toDataURL('image/jpeg', 0.7);
         }
 
         try {
-            // ¡AQUÍ ESTABA EL ERROR! 
-            // Volvemos a enviarlo como JSON puro en lugar de FormData para que PHP lo reciba correctamente.
             const req = await fetch('../../controller/asistencia_controller.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: 'registrarMarca', 
-                    codigo: codigo, 
-                    tipo: tipoSeleccionado,
-                    foto: fotoBase64
-                })
+                body: JSON.stringify({ action: 'registrarMarca', codigo: codigo, tipo: tipoSeleccionado, foto: fotoBase64 })
             });
-
             const res = await req.json();
-
             if (res.status === 1) {
                 mostrarNotificacion(res.message || "Marca registrada con éxito", "success");
-                radioSeleccionado.checked = false; // Desmarca el botón
+                radioSeleccionado.checked = false; 
             } else {
                 mostrarNotificacion(res.message || "Error al registrar la marca", "error");
             }
-
         } catch (error) {
             console.error("Error al registrar:", error);
             mostrarNotificacion("Error de conexión al servidor.", "error");
         }
-
         inputCodigo.value = '';
         inputCodigo.focus();
     });
@@ -1012,16 +1079,13 @@ if (formEscanerGlobal) {
 async function cargarListaUsuarios() {
     const tbody = document.getElementById('tabla-usuarios');
     if (!tbody) return;
-
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-danger" role="status"></div></td></tr>`;
     const res = await apiUsuarios.getUsuarios();
     tbody.innerHTML = '';
-
     if (res.status === 1 && res.data && res.data.length > 0) {
         res.data.forEach(u => {
             let rolBadge = u.rol === 'superadmin' ? 'bg-danger-yb-light text-danger-yb' : 'bg-blue-yb-light text-blue-yb';
             let estadoBadge = u.estado === 'Activo' ? 'bg-success text-white' : 'bg-secondary text-white';
-
             tbody.innerHTML += `
             <tr>
                 <td class="ps-4 py-3 fw-bold text-black"><i class="bi bi-person-circle text-muted me-2 fs-5 align-middle"></i> ${u.nombre}</td>
@@ -1034,9 +1098,7 @@ async function cargarListaUsuarios() {
                 </td>
             </tr>`;
         });
-    } else {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No se encontraron usuarios.</td></tr>';
-    }
+    } else { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No se encontraron usuarios.</td></tr>'; }
 }
 
 function abrirModalUsuario() {
@@ -1047,7 +1109,6 @@ function abrirModalUsuario() {
     if (document.getElementById('textoTituloModal')) document.getElementById('textoTituloModal').innerText = 'Registrar Nuevo Usuario';
     if (document.getElementById('hint-password')) document.getElementById('hint-password').style.display = 'none';
     if (document.getElementById('usuario_password')) document.getElementById('usuario_password').required = true;
-
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
 }
@@ -1060,7 +1121,6 @@ function editarUsuario(id, nombre, login, rol, estado) {
     document.getElementById('usuario_estado').value = estado;
     document.getElementById('usuario_password').value = '';
     document.getElementById('usuario_password').required = false;
-
     document.getElementById('textoTituloModal').innerText = 'Editar Usuario';
     document.getElementById('hint-password').style.display = 'inline';
     new bootstrap.Modal(document.getElementById('modalFormUsuario')).show();
@@ -1075,33 +1135,18 @@ async function guardarUsuario() {
         rol: document.getElementById('usuario_rol').value,
         estado: document.getElementById('usuario_estado').value
     };
-
-    if (!datos.nombre || !datos.login) {
-        mostrarNotificacion("El nombre y el login son obligatorios.", "warning");
-        return;
-    }
-
+    if (!datos.nombre || !datos.login) { mostrarNotificacion("El nombre y el login son obligatorios.", "warning"); return; }
     let res;
-    if (id) {
-        datos.id = id;
-        res = await apiUsuarios.updateUsuario(datos);
-    } else {
-        res = await apiUsuarios.createUsuario(datos);
-    }
-
+    if (id) { datos.id = id; res = await apiUsuarios.updateUsuario(datos); } 
+    else { res = await apiUsuarios.createUsuario(datos); }
     if (res.status === 1) {
         mostrarNotificacion("Usuario guardado exitosamente.", "success");
         bootstrap.Modal.getInstance(document.getElementById('modalFormUsuario')).hide();
         cargarListaUsuarios();
-    } else {
-        mostrarNotificacion("Error: " + res.message, "error");
-    }
+    } else { mostrarNotificacion("Error: " + res.message, "error"); }
 }
 
-function abrirModalBorrarUsuario(id) {
-    document.getElementById('delete_usuario_id').value = id;
-    new bootstrap.Modal(document.getElementById('modalBorrarUsuario')).show();
-}
+function abrirModalBorrarUsuario(id) { document.getElementById('delete_usuario_id').value = id; new bootstrap.Modal(document.getElementById('modalBorrarUsuario')).show(); }
 
 async function ejecutarBorrarUsuario() {
     const id = document.getElementById('delete_usuario_id').value;
@@ -1111,9 +1156,7 @@ async function ejecutarBorrarUsuario() {
         mostrarNotificacion("Usuario eliminado con éxito.", "delete");
         bootstrap.Modal.getInstance(document.getElementById('modalBorrarUsuario')).hide();
         cargarListaUsuarios();
-    } else {
-        mostrarNotificacion("Error al eliminar: " + res.message, "error");
-    }
+    } else { mostrarNotificacion("Error al eliminar: " + res.message, "error"); }
 }
 
 /* =========================================================================
@@ -1137,7 +1180,6 @@ async function cargarEstadisticasDashboard() {
         mostrarNotificacion("Error crítico al conectar con el servidor.", "error");
     }
 }
-
 function mostrarCerosDashboard() {
     document.getElementById('dash-total-func').innerHTML = '0';
     document.getElementById('dash-presentes').innerHTML = '0';
@@ -1146,41 +1188,26 @@ function mostrarCerosDashboard() {
 }
 
 /* =========================================================================
-   MÓDULO 9: FUNCIÓN GLOBAL DE BORRADO E IMPORTACIÓN
+   MÓDULO 9: BORRADO GLOBAL E IMPORTACIÓN CSV
    ========================================================================= */
 async function ejecutarBorrado() {
     const modalEl = document.getElementById('modalBorrar');
-    if (modalEl) {
-        const bsModal = bootstrap.Modal.getInstance(modalEl);
-        if (bsModal) bsModal.hide();
-    }
+    if (modalEl) { const bsModal = bootstrap.Modal.getInstance(modalEl); if (bsModal) bsModal.hide(); }
 
     if (typeof funcionarioAborrarId !== 'undefined' && funcionarioAborrarId !== null) {
         try {
             const res = await apiFuncionarios.deleteFuncionario(funcionarioAborrarId);
-            if (res.status === 1) {
-                mostrarNotificacion("Funcionario eliminado correctamente.", "delete");
-                cargarListaFuncionarios();
-            } else {
-                mostrarNotificacion("No se pudo eliminar: " + res.message, "error");
-            }
-        } catch (error) {
-            mostrarNotificacion("Error de conexión al eliminar.", "error");
-        }
+            if (res.status === 1) { mostrarNotificacion("Funcionario eliminado correctamente.", "delete"); cargarListaFuncionarios(); } 
+            else { mostrarNotificacion("No se pudo eliminar: " + res.message, "error"); }
+        } catch (error) { mostrarNotificacion("Error de conexión al eliminar.", "error"); }
         funcionarioAborrarId = null;
     }
     else if (typeof seccionABorrarId !== 'undefined' && seccionABorrarId !== null) {
         try {
             const res = await apiSecciones.deleteSeccion(seccionABorrarId);
-            if (res.status === 1) {
-                mostrarNotificacion("Sección eliminada correctamente.", "delete");
-                if (typeof cargarListaSecciones === "function") cargarListaSecciones();
-            } else {
-                mostrarNotificacion("Error al eliminar la sección: " + res.message, "error");
-            }
-        } catch (error) {
-            mostrarNotificacion("Error de conexión al eliminar.", "error");
-        }
+            if (res.status === 1) { mostrarNotificacion("Sección eliminada correctamente.", "delete"); if (typeof cargarListaSecciones === "function") cargarListaSecciones(); } 
+            else { mostrarNotificacion("Error al eliminar la sección: " + res.message, "error"); }
+        } catch (error) { mostrarNotificacion("Error de conexión al eliminar.", "error"); }
         seccionABorrarId = null;
     }
 }
@@ -1191,61 +1218,33 @@ if (formImportar) {
         e.preventDefault();
         const btn = document.getElementById('btn-importar');
         const fileInput = document.getElementById('archivo_csv');
-
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
-
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
         const formData = new FormData();
-        formData.append('action', 'importar');
-        formData.append('archivo_csv', fileInput.files[0]);
-
+        formData.append('action', 'importar'); formData.append('archivo_csv', fileInput.files[0]);
         try {
-            const req = await fetch('../../controller/migracion_controller.php', {
-                method: 'POST',
-                body: formData
-            });
+            const req = await fetch('../../controller/migracion_controller.php', { method: 'POST', body: formData });
             const res = await req.json();
-
             if (res.status === 1) {
                 mostrarNotificacion(res.message, "success");
                 bootstrap.Modal.getInstance(document.getElementById('modalMigracion')).hide();
                 if (typeof cargarListaFuncionarios === 'function') cargarListaFuncionarios();
-            } else {
-                mostrarNotificacion(res.message, "error");
-            }
-        } catch (error) {
-            mostrarNotificacion("Error de conexión.", "error");
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-database-add me-2"></i> Procesar Archivo';
-        }
+            } else { mostrarNotificacion(res.message, "error"); }
+        } catch (error) { mostrarNotificacion("Error de conexión.", "error"); } 
+        finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-database-add me-2"></i> Procesar Archivo'; }
     });
 }
 
 function inicializarBuscadorUniversal(idInput, idContenedor, selectorFila) {
     const input = document.getElementById(idInput);
     const contenedor = document.getElementById(idContenedor);
-
     if (!input || !contenedor) return;
-
     input.addEventListener('input', function () {
         const termino = this.value.toLowerCase().trim();
         const filas = contenedor.querySelectorAll(selectorFila);
-
         filas.forEach(fila => {
             const contenido = fila.textContent.toLowerCase();
-
-            if (contenido.includes(termino)) {
-                fila.style.setProperty('display', 'flex', 'important');
-            } else {
-                fila.style.setProperty('display', 'none', 'important');
-            }
+            if (contenido.includes(termino)) { fila.style.setProperty('display', 'flex', 'important'); } 
+            else { fila.style.setProperty('display', 'none', 'important'); }
         });
     });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    inicializarBuscadorUniversal('buscador-funcionarios', 'contenedor-funcionarios', '.list-group-item');
-    inicializarBuscadorUniversal('buscar-secciones', 'contenedor-secciones', '.list-group-item');
-    inicializarBuscadorUniversal('buscar-turnos', 'contenedor-turnos', '.list-group-item');
-});

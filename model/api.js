@@ -134,7 +134,8 @@ const apiAsistencia = {
 
     // Para la VistaAsistencia.php (Cargar el mes de un funcionario en el calendario)
     obtenerAsistenciaMes: async (rut, mes, anio) => {
-        return await procesarPeticion(`${apiAsistencia.baseUrl}?action=getAsistencia&rut=${rut}&mes=${mes}&anio=${anio}`, { method: 'GET' });
+        const request = await procesarPeticion(`${apiAsistencia.baseUrl}?action=getAsistencia&rut=${rut}&mes=${mes}&anio=${anio}`, { method: 'GET' });
+        return request; 
     },
 
     // Para la VistaEscaner.php (Cuando la pistola lee el código de barras y selecciona Entrada/Salida)
