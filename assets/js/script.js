@@ -6,7 +6,7 @@ let modalFormTurnoInstance = null;
 let modalBorrarTurnoInstance = null;
 let funcionarioAborrarId = null;
 let seccionABorrarId = null;
-let fechaActualVisualizacion = new Date(); // Obtiene el mes real
+let fechaActualVisualizacion = new Date(); 
 
 const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
@@ -25,7 +25,6 @@ function formatearRUT(rut) {
 
     return `${cuerpo}-${dv}`;
 }
-
 
 function mostrarNotificacion(mensaje, tipo = 'success') {
     let container = document.getElementById('toast-container-yb');
@@ -400,6 +399,7 @@ async function cargarSelectSeccionesEnrolar() {
         select.innerHTML = '<option value="" selected disabled>No hay secciones creadas</option>';
     }
 }
+
 /* =========================================================================
    MÓDULO 4: FUNCIONARIOS Y ASISTENCIA
    ========================================================================= */
@@ -634,7 +634,6 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
         let contenidoCelda = `<div class="fw-bold text-center w-100 h-100 d-flex justify-content-center align-items-center numero-calendario">${dia}</div>`;
 
         if (infoDia) {
-            // LÓGICA INCORPORADA PARA PINTAR LICENCIAS O VACACIONES
             if (infoDia.estado === 'licencia') {
                 bgClass = 'cal-day-licencia';
                 contenidoCelda = `
@@ -650,7 +649,6 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
                         <div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-airplane"></i><br>Feriado<br>Legal</div>
                     </div>`;
             } else {
-                // TU LÓGICA ORIGINAL INTACTA PARA LOS DÍAS DE TRABAJO
                 bgClass = infoDia.estado === 'verde' ? 'cal-day-success' : 'cal-day-warning';
                 totalMinutosMes += infoDia.minutos_totales || 0;
                 let badgeExtra = '';
@@ -723,7 +721,6 @@ function generarReporteMensual(rutFuncionario) {
     window.open(url, '_blank');
 }
 
-/* FUNCIONES NUEVAS AGREGADAS PARA LAS AUSENCIAS/LICENCIAS */
 function abrirModalAusencia(rut) {
     const modalEl = document.getElementById('modalAusencia');
     if (!modalEl) return;
@@ -953,7 +950,6 @@ if (formEscanerGlobal) {
         const inputCodigo = document.getElementById('codigo_tarjeta');
         const radioSeleccionado = document.querySelector('input[name="tipo_marca"]:checked');
 
-        // REEMPLAZO DE ALERT NATIVO POR NOTIFICACIÓN TOAST
         if (!radioSeleccionado) {
             mostrarNotificacion("⚠️ ¡ALTO! Debe presionar obligatoriamente el botón de ENTRADA o SALIDA.", "warning");
             inputCodigo.value = '';
@@ -964,7 +960,6 @@ if (formEscanerGlobal) {
         const tipoSeleccionado = radioSeleccionado.value;
         const codigo = inputCodigo.value.trim();
 
-        // REEMPLAZO DE ALERT NATIVO POR NOTIFICACIÓN TOAST
         if (!codigo || codigo.length < 8) {
             mostrarNotificacion("Código inválido. Verifique su credencial.", "warning");
             inputCodigo.value = '';
@@ -979,24 +974,24 @@ if (formEscanerGlobal) {
         }
 
         try {
-            // USAMOS FORMDATA PARA QUE PHP NO FALLE
-            const formData = new FormData();
-            formData.append('action', 'registrarMarca');
-            formData.append('codigo', codigo);
-            formData.append('tipo', tipoSeleccionado);
-            formData.append('foto', fotoBase64);
-
+            // ¡AQUÍ ESTABA EL ERROR! 
+            // Volvemos a enviarlo como JSON puro en lugar de FormData para que PHP lo reciba correctamente.
             const req = await fetch('../../controller/asistencia_controller.php', {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'registrarMarca', 
+                    codigo: codigo, 
+                    tipo: tipoSeleccionado,
+                    foto: fotoBase64
+                })
             });
 
             const res = await req.json();
 
-            // RESPUESTAS ESTILIZADAS
             if (res.status === 1) {
                 mostrarNotificacion(res.message || "Marca registrada con éxito", "success");
-                radioSeleccionado.checked = false; // Desmarca el botón para el siguiente usuario
+                radioSeleccionado.checked = false; // Desmarca el botón
             } else {
                 mostrarNotificacion(res.message || "Error al registrar la marca", "error");
             }
@@ -1151,7 +1146,7 @@ function mostrarCerosDashboard() {
 }
 
 /* =========================================================================
-   MÓDULO 9: FUNCIÓN GLOBAL DE BORRADO
+   MÓDULO 9: FUNCIÓN GLOBAL DE BORRADO E IMPORTACIÓN
    ========================================================================= */
 async function ejecutarBorrado() {
     const modalEl = document.getElementById('modalBorrar');
@@ -1190,7 +1185,6 @@ async function ejecutarBorrado() {
     }
 }
 
-
 const formImportar = document.getElementById('form-importar-csv');
 if (formImportar) {
     formImportar.addEventListener('submit', async (e) => {
@@ -1228,7 +1222,6 @@ if (formImportar) {
     });
 }
 
-
 function inicializarBuscadorUniversal(idInput, idContenedor, selectorFila) {
     const input = document.getElementById(idInput);
     const contenedor = document.getElementById(idContenedor);
@@ -1256,47 +1249,3 @@ document.addEventListener('DOMContentLoaded', () => {
     inicializarBuscadorUniversal('buscar-secciones', 'contenedor-secciones', '.list-group-item');
     inicializarBuscadorUniversal('buscar-turnos', 'contenedor-turnos', '.list-group-item');
 });
-
-/* =========================================================================
-   MÓDULO 10: FUNCIÓN GLOBAL DE asistencia 
-   ========================================================================= */
-
-function abrirModalAusencia(rut) {
-    const modalEl = document.getElementById('modalAusencia');
-    if (!modalEl) return;
-    document.getElementById('formAusencia').reset();
-    document.getElementById('ausencia_rut').value = rut;
-    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-    modal.show();
-}
-
-async function guardarAusencia() {
-    const rut = document.getElementById('ausencia_rut').value;
-    const tipo = document.getElementById('ausencia_tipo').value;
-    const inicio = document.getElementById('ausencia_inicio').value;
-    const fin = document.getElementById('ausencia_fin').value;
-    const obs = document.getElementById('ausencia_obs').value;
-
-    if (!tipo || !inicio || !fin) { mostrarNotificacion("Debe seleccionar el tipo y las fechas.", "warning"); return; }
-    if (inicio > fin) { mostrarNotificacion("La fecha de inicio no puede ser posterior al término.", "warning"); return; }
-
-    try {
-        const formData = new FormData();
-        formData.append('action', 'registrarAusencia');
-        formData.append('rut', rut);
-        formData.append('tipo', tipo);
-        formData.append('fecha_inicio', inicio);
-        formData.append('fecha_fin', fin);
-        formData.append('observacion', obs);
-
-        const req = await fetch('../../controller/asistencia_controller.php', { method: 'POST', body: formData });
-        const res = await req.json();
-
-        if (res.status === 1) {
-            mostrarNotificacion("Ausencia registrada correctamente.", "success");
-            bootstrap.Modal.getInstance(document.getElementById('modalAusencia')).hide();
-            const safeId = rut.replace(/[^a-zA-Z0-9]/g, '');
-            await cargarDatosYDibujarCalendario(safeId, rut, fechaActualVisualizacion);
-        } else { mostrarNotificacion("Error: " + res.message, "error"); }
-    } catch (error) { mostrarNotificacion("Error de conexión al registrar.", "error"); }
-}
