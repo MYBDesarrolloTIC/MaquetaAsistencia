@@ -55,6 +55,7 @@ body {
 .shadow-sm {
     box-shadow: 0 4px 12px rgba(0,0,0,0.04) !important;
 }
+
 /* =========================================
    3. ESTRUCTURA PRINCIPAL (FLEXBOX LAYOUT)
    ========================================= */
@@ -83,8 +84,8 @@ body {
     display: block !important;
 }
 
-/* REGLA DE ORO PARA EL TAMAÑO UNIFORME */
-.main-content > div,
+/* REGLA DE ORO PARA EL TAMAÑO UNIFORME (¡IGNORANDO MODALES!) */
+.main-content > div:not(.modal),
 .main-content > section,
 .main-content > main,
 .main-content > form,
@@ -165,7 +166,9 @@ body {
 .btn-logout-yb:hover {
     background-color: var(--yb-red);
     color: #ffffff;
-}/* =========================================
+}
+
+/* =========================================
    5. ENCABEZADOS DE VISTA (Recuadro Rojo)
    ========================================= */
 .header-seccion {
@@ -182,7 +185,7 @@ body {
     flex-wrap: wrap; /* Por si la pantalla se achica */
 }
 
-/* Forzamos a que todos los textos, íconos y spans (como el "Panel Activo") sean blancos */
+/* Forzamos a que todos los textos, íconos y spans sean blancos */
 .header-seccion h1,
 .header-seccion h2,
 .header-seccion p,
@@ -223,7 +226,7 @@ body {
 }
 
 /* =========================================
-   5. VISTA: LOGIN (REDiseñado)
+   6. VISTA: LOGIN (REDiseñado)
    ========================================= */
 
 /* Fondo degradado suave para el login */
@@ -276,11 +279,6 @@ body {
 .login-card .btn-custom:hover {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(27, 54, 93, 0.3) !important;
-}
-
-/* Texto inferior institucional */
-.login-card::after {
-    display: none; /* Quitamos el after antiguo para usar el nuevo diseño limpio */
 }
 
 /* =========================================
@@ -362,6 +360,7 @@ body {
     border-color: var(--yb-red);
     background-color: rgba(218, 41, 28, 0.05);
 }
+
 /* =========================================
    10. VISTA: ESCÁNER DE ASISTENCIA (TERMINAL)
    ========================================= */
@@ -436,47 +435,35 @@ body {
 .card-dash h6 { font-size: 1.1rem !important; letter-spacing: 0.5px; }
 .card-dash h2 { font-size: 3.5rem !important; margin-top: 5px; }
 
-/* Tablas CRUD (Agrandadas) */
-.table { font-size: 1.15rem !important; }
-.table th { padding: 1.5rem 1rem !important; font-size: 1.2rem !important; font-weight: 700 !important; color: var(--yb-black) !important; }
-.table td { padding: 1.2rem 1rem !important; vertical-align: middle !important; }
-.table .btn-sm { font-size: 1rem !important; padding: 0.4rem 0.8rem !important; }
 /* =========================================
    12. TABLAS CRUD (VISTAS DE DATOS) MÁS GRANDES
    ========================================= */
-/* Tamaño general de la tabla */
 .table {
-    font-size: 1.15rem !important; /* Letra más grande en todas las celdas */
+    font-size: 1.15rem !important;
 }
-
-/* Cabeceras de la tabla (Nombres de las columnas) */
 .table th {
-    padding: 1.5rem 1rem !important; /* Más altas */
+    padding: 1.5rem 1rem !important;
     font-size: 1.2rem !important;
     font-weight: 700 !important;
     color: var(--yb-black) !important;
 }
-
-/* Filas de la tabla (El contenido) */
 .table td {
-    padding: 1.2rem 1rem !important; /* Filas más anchas y cómodas */
+    padding: 1.2rem 1rem !important;
     vertical-align: middle !important;
 }
-
-/* Agrandar botones dentro de las tablas (Editar/Eliminar) */
 .table .btn-sm {
     font-size: 1rem !important;
     padding: 0.4rem 0.8rem !important;
 }
 
 /* =========================================================================
-   12. NOTIFICACIONES FLOTANTES (TOASTS)
+   13. NOTIFICACIONES FLOTANTES (TOASTS)
    ========================================================================= */
 #toast-container-yb { 
     z-index: 9999 !important; 
     position: fixed; 
     bottom: 2rem; 
-    right: 2rem; /* <--- Aquí está la corrección */
+    right: 2rem; 
     pointer-events: none; 
 }
 
@@ -493,34 +480,40 @@ body {
     0% { transform: translateX(100%); opacity: 0; } 
     100% { transform: translateX(0); opacity: 1; } 
 }
+
 /* =========================================================================
-   FORZAR CENTRADO DE TODOS LOS POPUPS (MODALES) EN CUALQUIER PANTALLA
+   15. BARRA DE BÚSQUEDA (Quitar resplandor azul de Bootstrap)
    ========================================================================= */
-.modal-dialog.modal-dialog-centered {
-    display: flex !important;
-    align-items: center !important;      /* Centra verticalmente */
-    justify-content: center !important;  /* Centra horizontalmente */
-    min-height: 100vh !important;        /* Toma el 100% del alto de la pantalla */
-    margin: 0 auto !important;           /* Previene que otros márgenes lo muevan */
+/* Quita el borde azul del input cuando haces clic */
+.header-seccion .input-group .form-control:focus {
+    box-shadow: none !important;
+    border-color: transparent !important;
+    outline: none !important;
+    background-color: #ffffff !important; /* Se pone 100% blanco al escribir */
 }
 
-/* Evita que el contenido interno se estire de forma extraña */
-.modal-dialog.modal-dialog-centered .modal-content {
-    margin: auto !important;
-    width: 100%;
-}
-/* =========================================================================
-   FORZAR CENTRADO ABSOLUTO DE LOS POPUPS (MODALES)
-   ========================================================================= */
-.modal-dialog.modal-dialog-centered {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-height: calc(100vh - 3rem) !important; /* Usa casi toda la pantalla */
-    margin: 0 auto !important;
+/* Hace que el ícono de la lupa también se ponga blanco brillante al hacer clic en el input */
+.header-seccion .input-group:focus-within .input-group-text {
+    background-color: #ffffff !important;
 }
 
-.modal-dialog.modal-dialog-centered .modal-content {
-    margin: auto !important;
-    width: 100%;
+/* Suaviza los bordes para que se vea como una sola pieza */
+.header-seccion .input-group-text,
+.header-seccion .form-control {
+    border: none !important;
+}
+
+/* =========================================================================
+   16. COLORES ESPECIALES PARA CALENDARIO (LICENCIAS Y VACACIONES)
+   ========================================================================= */
+.cal-day-licencia {
+    background-color: rgba(111, 66, 193, 0.15) !important; /* Morado suave */
+    border: 1px solid rgba(111, 66, 193, 0.4) !important;
+    color: #6f42c1 !important;
+}
+
+.cal-day-vacaciones {
+    background-color: rgba(13, 202, 240, 0.15) !important; /* Celeste suave */
+    border: 1px solid rgba(13, 202, 240, 0.4) !important;
+    color: #087990 !important;
 }

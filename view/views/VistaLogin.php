@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,7 +6,8 @@
     <title>Login - I. Municipalidad de Yerbas Buenas</title>    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/css/style.css">
+    
+    <link rel="stylesheet" href="../../assets/css/style.css?v=6">
 </head>
 <body class="login-bg d-flex align-items-center justify-content-center vh-100">
 
@@ -24,8 +24,6 @@
                         <h3 class="fw-bold text-black mb-1">Acceso al Sistema</h3>
                         <p class="text-muted small">I. Municipalidad de Yerbas Buenas</p>
                     </div>
-
-                    <div id="alertaError" class="alert alert-danger d-none text-center p-2 mb-4 fw-bold small"></div>
 
                     <form id="form_login">
                         
@@ -49,14 +47,15 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-custom w-100 py-3 fw-bold shadow-sm">
+                        <button type="submit" class="btn btn-custom w-100 py-3 fw-bold shadow-sm" style="background-color: var(--yb-blue); color: white; border: none;">
                             <i class="bi bi-box-arrow-in-right me-2"></i> INICIAR SESIÓN
                         </button>
 
                     </form>
-
-                </div></div></div></div><script src="../../model/api.js?v=1"></script>
-    <script src="../../assets/js/script.js?v=1"></script>
+                    
+                </div> </div> </div> </div> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../model/api.js?v=6"></script>
+    <script src="../../assets/js/script.js?v=6"></script>
+    
 </body>
 </html>
-

@@ -400,7 +400,6 @@ async function cargarSelectSeccionesEnrolar() {
         select.innerHTML = '<option value="" selected disabled>No hay secciones creadas</option>';
     }
 }
-
 /* =========================================================================
    MÓDULO 4: FUNCIONARIOS Y ASISTENCIA
    ========================================================================= */
@@ -514,7 +513,12 @@ async function cargarListaFuncionarios() {
                                                         <span id="mes-anio-${safeId}" class="fw-bold text-uppercase px-3 text-center" style="min-width: 140px;"></span>
                                                         <button class="btn btn-sm btn-white border-0 fw-bold" onclick="cambiarMes(1, '${safeId}', '${f.rut}')"><i class="bi bi-chevron-right"></i></button>
                                                     </div>
-                                                    <button class="btn btn-outline-danger fw-bold shadow-sm px-3 py-1" style="height: 36px;" title="Descargar Reporte" onclick="generarReporteMensual('${f.rut}')">
+                                                    
+                                                    <button class="btn btn-outline-primary fw-bold shadow-sm px-3 py-1 ms-2" style="height: 36px;" title="Registrar Ausencia" onclick="abrirModalAusencia('${f.rut}')">
+                                                        <i class="bi bi-file-medical fs-5"></i>
+                                                    </button>
+                                                    
+                                                    <button class="btn btn-outline-danger fw-bold shadow-sm px-3 py-1 ms-1" style="height: 36px;" title="Descargar Reporte" onclick="generarReporteMensual('${f.rut}')">
                                                         <i class="bi bi-file-pdf-fill fs-5"></i>
                                                     </button>
                                                 </div>
@@ -535,9 +539,6 @@ async function cargarListaFuncionarios() {
         console.error("Error cargando lista:", error); 
     }
 }
-
-
-
 
 async function abrirPanelFuncionario(safeId, rutReal, modo, event) {
     if (event) event.stopPropagation();
@@ -633,23 +634,41 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
         let contenidoCelda = `<div class="fw-bold text-center w-100 h-100 d-flex justify-content-center align-items-center numero-calendario">${dia}</div>`;
 
         if (infoDia) {
-            bgClass = infoDia.estado === 'verde' ? 'cal-day-success' : 'cal-day-warning';
-            totalMinutosMes += infoDia.minutos_totales || 0;
-            let badgeExtra = '';
+            // LÓGICA INCORPORADA PARA PINTAR LICENCIAS O VACACIONES
+            if (infoDia.estado === 'licencia') {
+                bgClass = 'cal-day-licencia';
+                contenidoCelda = `
+                    <div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center">
+                        <div class="fw-bold fs-6 mb-1">${dia}</div>
+                        <div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-bandaid"></i><br>Licencia</div>
+                    </div>`;
+            } else if (infoDia.estado === 'vacaciones') {
+                bgClass = 'cal-day-vacaciones';
+                contenidoCelda = `
+                    <div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center">
+                        <div class="fw-bold fs-6 mb-1">${dia}</div>
+                        <div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-airplane"></i><br>Feriado<br>Legal</div>
+                    </div>`;
+            } else {
+                // TU LÓGICA ORIGINAL INTACTA PARA LOS DÍAS DE TRABAJO
+                bgClass = infoDia.estado === 'verde' ? 'cal-day-success' : 'cal-day-warning';
+                totalMinutosMes += infoDia.minutos_totales || 0;
+                let badgeExtra = '';
 
-            if (infoDia.extra !== '00:00') {
-                let colorExtra = infoDia.tipo_extra === 'Nocturna' ? 'bg-dark' : 'bg-primary';
-                badgeExtra = `<div class="mt-1"><span class="badge ${colorExtra} w-100" style="font-size:0.6rem;">+${infoDia.extra}</span></div>`;
+                if (infoDia.extra !== '00:00') {
+                    let colorExtra = infoDia.tipo_extra === 'Nocturna' ? 'bg-dark' : 'bg-primary';
+                    badgeExtra = `<div class="mt-1"><span class="badge ${colorExtra} w-100" style="font-size:0.6rem;">+${infoDia.extra}</span></div>`;
+                }
+
+                contenidoCelda = `
+                    <div class="p-1 p-md-2 w-100 d-flex flex-column h-100 text-start texto-calendario" style="font-size: 0.75rem;">
+                        <div class="fw-bold text-end mb-1 numero-calendario fs-6">${dia}</div>
+                        <div class="d-flex justify-content-between text-muted fw-semibold"><span>E:</span> <span class="text-dark">${infoDia.entrada}</span></div>
+                        <div class="d-flex justify-content-between text-muted fw-semibold mb-1"><span>S:</span> <span class="text-dark">${infoDia.salida}</span></div>
+                        ${badgeExtra}
+                    </div>
+                `;
             }
-
-            contenidoCelda = `
-                <div class="p-1 p-md-2 w-100 d-flex flex-column h-100 text-start texto-calendario" style="font-size: 0.75rem;">
-                    <div class="fw-bold text-end mb-1 numero-calendario fs-6">${dia}</div>
-                    <div class="d-flex justify-content-between text-muted fw-semibold"><span>E:</span> <span class="text-dark">${infoDia.entrada}</span></div>
-                    <div class="d-flex justify-content-between text-muted fw-semibold mb-1"><span>S:</span> <span class="text-dark">${infoDia.salida}</span></div>
-                    ${badgeExtra}
-                </div>
-            `;
         }
         htmlCalendario += `<div class="cal-day-box rounded-3 ${bgClass}" style="min-height: 85px;" title="Día ${dia}">${contenidoCelda}</div>`;
     }
@@ -702,6 +721,57 @@ function generarReporteMensual(rutFuncionario) {
     const anioActual = fechaActualVisualizacion.getFullYear();
     const url = `../../controller/reporte_controller.php?rut=${rutFuncionario}&mes=${mesActual}&anio=${anioActual}`;
     window.open(url, '_blank');
+}
+
+/* FUNCIONES NUEVAS AGREGADAS PARA LAS AUSENCIAS/LICENCIAS */
+function abrirModalAusencia(rut) {
+    const modalEl = document.getElementById('modalAusencia');
+    if (!modalEl) return;
+    document.getElementById('formAusencia').reset();
+    document.getElementById('ausencia_rut').value = rut;
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+async function guardarAusencia() {
+    const rut = document.getElementById('ausencia_rut').value;
+    const tipo = document.getElementById('ausencia_tipo').value;
+    const inicio = document.getElementById('ausencia_inicio').value;
+    const fin = document.getElementById('ausencia_fin').value;
+    const obs = document.getElementById('ausencia_obs').value;
+
+    if (!tipo || !inicio || !fin) { 
+        mostrarNotificacion("Debe seleccionar el tipo y las fechas.", "warning"); 
+        return; 
+    }
+    if (inicio > fin) { 
+        mostrarNotificacion("La fecha de inicio no puede ser posterior al término.", "warning"); 
+        return; 
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'registrarAusencia');
+        formData.append('rut', rut);
+        formData.append('tipo', tipo);
+        formData.append('fecha_inicio', inicio);
+        formData.append('fecha_fin', fin);
+        formData.append('observacion', obs);
+
+        const req = await fetch('../../controller/asistencia_controller.php', { method: 'POST', body: formData });
+        const res = await req.json();
+
+        if (res.status === 1) {
+            mostrarNotificacion("Ausencia registrada correctamente.", "success");
+            bootstrap.Modal.getInstance(document.getElementById('modalAusencia')).hide();
+            const safeId = rut.replace(/[^a-zA-Z0-9]/g, '');
+            await cargarDatosYDibujarCalendario(safeId, rut, fechaActualVisualizacion);
+        } else { 
+            mostrarNotificacion("Error: " + res.message, "error"); 
+        }
+    } catch (error) { 
+        mostrarNotificacion("Error de conexión al registrar.", "error"); 
+    }
 }
 
 /* =========================================================================
@@ -789,7 +859,6 @@ function confirmarBorrarSeccion(id) {
     const modal = new bootstrap.Modal(document.getElementById('modalBorrar'));
     modal.show();
 }
-
 /* =========================================================================
    MÓDULO 6: TERMINAL DE ESCÁNER (RELOJ Y CÁMARAS)
    ========================================================================= */
@@ -855,9 +924,9 @@ function onScanSuccess(decodedText, decodedResult) {
     const inputCodigo = document.getElementById('codigo_tarjeta');
     if (inputCodigo) {
         inputCodigo.value = decodedText;
-        formEscaner = document.getElementById('form_marcar_asistencia');
+        const formEscaner = document.getElementById('form_marcar_asistencia');
         if (formEscaner) {
-            formEscaner.dispatchEvent(new Event('submit'));
+            formEscaner.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
         }
     }
 }
@@ -882,11 +951,11 @@ if (formEscanerGlobal) {
         e.preventDefault();
 
         const inputCodigo = document.getElementById('codigo_tarjeta');
-        const alerta = document.getElementById('alertaAsistencia');
         const radioSeleccionado = document.querySelector('input[name="tipo_marca"]:checked');
 
+        // REEMPLAZO DE ALERT NATIVO POR NOTIFICACIÓN TOAST
         if (!radioSeleccionado) {
-            alert("⚠️ ¡ALTO! Debe presionar obligatoriamente el botón de ENTRADA o SALIDA antes de escanear su credencial.");
+            mostrarNotificacion("⚠️ ¡ALTO! Debe presionar obligatoriamente el botón de ENTRADA o SALIDA.", "warning");
             inputCodigo.value = '';
             inputCodigo.focus();
             return;
@@ -895,8 +964,9 @@ if (formEscanerGlobal) {
         const tipoSeleccionado = radioSeleccionado.value;
         const codigo = inputCodigo.value.trim();
 
+        // REEMPLAZO DE ALERT NATIVO POR NOTIFICACIÓN TOAST
         if (!codigo || codigo.length < 8) {
-            alert("Código inválido. Verifique su credencial.");
+            mostrarNotificacion("Código inválido. Verifique su credencial.", "warning");
             inputCodigo.value = '';
             return;
         }
@@ -908,42 +978,36 @@ if (formEscanerGlobal) {
             fotoBase64 = canvasSeguridad.toDataURL('image/jpeg', 0.8);
         }
 
-        alerta.style.display = 'none';
-
         try {
+            // USAMOS FORMDATA PARA QUE PHP NO FALLE
+            const formData = new FormData();
+            formData.append('action', 'registrarMarca');
+            formData.append('codigo', codigo);
+            formData.append('tipo', tipoSeleccionado);
+            formData.append('foto', fotoBase64);
+
             const req = await fetch('../../controller/asistencia_controller.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'registrarMarca',
-                    codigo: codigo,
-                    tipo: tipoSeleccionado,
-                    foto: fotoBase64
-                })
+                body: formData
             });
 
             const res = await req.json();
-            alerta.style.display = 'block';
 
+            // RESPUESTAS ESTILIZADAS
             if (res.status === 1) {
-                alerta.className = 'alert alert-success fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
-                alerta.innerHTML = `<i class="bi bi-check-circle-fill me-2 fs-3 align-middle"></i> ${res.message}`;
-                radioSeleccionado.checked = false;
+                mostrarNotificacion(res.message || "Marca registrada con éxito", "success");
+                radioSeleccionado.checked = false; // Desmarca el botón para el siguiente usuario
             } else {
-                alerta.className = 'alert alert-danger fw-bold p-3 mt-4 text-start fs-5 shadow-sm border-0';
-                alerta.innerHTML = `<i class="bi bi-x-circle-fill me-2 fs-3 align-middle"></i> ${res.message}`;
+                mostrarNotificacion(res.message || "Error al registrar la marca", "error");
             }
 
         } catch (error) {
             console.error("Error al registrar:", error);
+            mostrarNotificacion("Error de conexión al servidor.", "error");
         }
 
         inputCodigo.value = '';
         inputCodigo.focus();
-
-        setTimeout(() => {
-            alerta.style.display = 'none';
-        }, 4000);
     });
 }
 
@@ -1192,3 +1256,47 @@ document.addEventListener('DOMContentLoaded', () => {
     inicializarBuscadorUniversal('buscar-secciones', 'contenedor-secciones', '.list-group-item');
     inicializarBuscadorUniversal('buscar-turnos', 'contenedor-turnos', '.list-group-item');
 });
+
+/* =========================================================================
+   MÓDULO 10: FUNCIÓN GLOBAL DE asistencia 
+   ========================================================================= */
+
+function abrirModalAusencia(rut) {
+    const modalEl = document.getElementById('modalAusencia');
+    if (!modalEl) return;
+    document.getElementById('formAusencia').reset();
+    document.getElementById('ausencia_rut').value = rut;
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+async function guardarAusencia() {
+    const rut = document.getElementById('ausencia_rut').value;
+    const tipo = document.getElementById('ausencia_tipo').value;
+    const inicio = document.getElementById('ausencia_inicio').value;
+    const fin = document.getElementById('ausencia_fin').value;
+    const obs = document.getElementById('ausencia_obs').value;
+
+    if (!tipo || !inicio || !fin) { mostrarNotificacion("Debe seleccionar el tipo y las fechas.", "warning"); return; }
+    if (inicio > fin) { mostrarNotificacion("La fecha de inicio no puede ser posterior al término.", "warning"); return; }
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'registrarAusencia');
+        formData.append('rut', rut);
+        formData.append('tipo', tipo);
+        formData.append('fecha_inicio', inicio);
+        formData.append('fecha_fin', fin);
+        formData.append('observacion', obs);
+
+        const req = await fetch('../../controller/asistencia_controller.php', { method: 'POST', body: formData });
+        const res = await req.json();
+
+        if (res.status === 1) {
+            mostrarNotificacion("Ausencia registrada correctamente.", "success");
+            bootstrap.Modal.getInstance(document.getElementById('modalAusencia')).hide();
+            const safeId = rut.replace(/[^a-zA-Z0-9]/g, '');
+            await cargarDatosYDibujarCalendario(safeId, rut, fechaActualVisualizacion);
+        } else { mostrarNotificacion("Error: " + res.message, "error"); }
+    } catch (error) { mostrarNotificacion("Error de conexión al registrar.", "error"); }
+}

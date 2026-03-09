@@ -2,20 +2,30 @@
 
 <div class="d-flex h-100 vh-100">
     <main class="main-content flex-grow-1 p-4 p-md-5 overflow-auto">
-        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 header-seccion">
+        
+        <div class="header-seccion d-flex justify-content-between align-items-center mb-4 pb-3">
             <div>
                 <h1 class="text-black fw-bold mb-0">Control de Asistencia</h1>
                 <p class="text-muted mb-0">Gestión de personal y revisión de jornadas laborales.</p>
             </div>
+            
+            <div class="mt-3 mt-md-0">
+                <div class="input-group shadow-sm rounded">
+                    <span class="input-group-text border-0 text-muted" style="background-color: rgba(255,255,255,0.9);">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="buscador-funcionarios" class="form-control border-0" placeholder="Buscar por nombre, RUT o sección..." style="min-width: 300px; height: 48px; background-color: rgba(255,255,255,0.9);">
+                </div>
+            </div>
         </div>
 
         <div class="card border-0 shadow-sm card-dashboard" id="lista-funcionarios-container">
-            <div class="card-header bg-white border-bottom fw-bold d-flex text-muted py-3">
-                <div class="col-2">RUT</div>
+            <div class="card-header bg-white border-bottom fw-bold d-none d-lg-flex text-muted py-3">
+                <div class="col-2 ps-3">RUT</div>
                 <div class="col-3">Nombre Completo</div>
-                <div class="col-2">Seccion</div>
+                <div class="col-3">Sección</div>
                 <div class="col-2">Turno</div>
-                <div class="col-3 text-center">Acciones</div>
+                <div class="col-2 text-end pe-4">Acciones</div>
             </div>
             
             <div class="list-group list-group-flush" id="contenedor-funcionarios"></div>
@@ -24,20 +34,68 @@
 </div>
 
 <div class="modal fade" id="modalBorrar" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-top-danger-yb">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title text-black fw-bold"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Seguridad</h5>
+                <h5 class="modal-title text-black fw-bold"><i class="bi bi-exclamation-triangle-fill text-danger-yb me-2"></i>Atención</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center py-4">
                 <p class="mb-0 fs-5">¿Estás seguro que deseas eliminar a este funcionario?</p>
+                <p class="text-danger-yb small fw-bold mt-2">Esta acción es irreversible.</p>
             </div>
             <div class="modal-footer border-0 bg-light justify-content-center">
                 <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger fw-bold px-4" id="btn-confirmar-borrar" onclick="ejecutarBorrado()">Sí, Eliminar</button>
+                <button type="button" class="btn btn-danger fw-bold px-4" style="background-color: var(--yb-red); border-color: var(--yb-red);" onclick="ejecutarBorrado()">Sí, Eliminar</button>
             </div>
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalAusencia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-top-danger-yb">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-black fw-bold"><i class="bi bi-file-medical text-danger-yb me-2"></i>Registrar Ausencia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formAusencia">
+                    <input type="hidden" id="ausencia_rut">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Tipo de Ausencia</label>
+                        <select class="form-select" id="ausencia_tipo" required>
+                            <option value="" selected disabled>Seleccione...</option>
+                            <option value="Licencia Médica">Licencia Médica</option>
+                            <option value="Feriado Legal">Feriado Legal (Vacaciones)</option>
+                            <option value="Permiso Administrativo">Permiso Administrativo</option>
+                            <option value="Cometido Funcionario">Cometido Funcionario</option>
+                        </select>
+                    </div>
+                    <div class="row mb-3 g-2">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Fecha Inicio</label>
+                            <input type="date" class="form-control" id="ausencia_inicio" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Fecha Término</label>
+                            <input type="date" class="form-control" id="ausencia_fin" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Observación / N° Documento</label>
+                        <textarea class="form-control" id="ausencia_obs" rows="2" placeholder="Opcional..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" style="background-color: var(--yb-blue); border-color: var(--yb-blue);" onclick="guardarAusencia()">
+                    <i class="bi bi-save me-1"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php include '../includes/footer.php'; ?>
