@@ -4,9 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Validación de seguridad para expulsar a quienes no estén logueados
 if (!isset($_SESSION['rol'])) {
-    header("Location: ../view/views/VistaLogin.php");
+    header("Location: ../../view/views/VistaLogin.php");
     exit();
 }
 ?> 

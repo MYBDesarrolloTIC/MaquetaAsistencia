@@ -45,23 +45,10 @@ try {
                 $agrupacion[$rut][$fecha][] = $hora;
             }
         }
-
-        /**
-         * Actualmente se crea una tabla extra para poder añadir esta exportacion pero provoca conflictos
-         * en la tabla asistencia, por ende se debe solo utilizar la tabla funcionario y modificar la base de 
-         * datos para que esta permita campos nulos poniendo datos por defecto, los datos base que debe tener la tabla
-         * funcionario son el rut del funcionario y el codigo de barras de la tarjeta, para lograr esto se debe crear 
-         * una funcion en el backend que permita lograr lo mismo que el frontend para crear ese codigo con los 5 numeros extra
-         * esto es viable porque basicamente tenemos lo necesario en el documento csv para poder lograrlo.
-         * 
-         * Pasos, primero se debe eliminar la tabla funcionarios_enrolar, luego se debe modificar la tabla funcionarios para que
-         * acepte los datos nulos, poniendo datos por defecto en su lugar, despues se debe en base al rut generar el serial de la tarjeta,
-         * y por ultimo se debe probar.
-         * 
-         * NOTA: Ya se modifico parte de la base de datos pero aun asi se debe revisar bien este tema. 
-         */
+        
         $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM funcionarios WHERE rut = ?");
-        $stmtAutoEnrolar = $pdo->prepare("INSERT INTO funcionarios_enrolar (rut) VALUES (?)");
+        // MODIFICACIÓN: Ahora insertamos el RUT y el CODIGO_TARJETA generados por PHP
+        $stmtAutoEnrolar = $pdo->prepare("INSERT INTO funcionarios (rut, codigo_tarjeta, nombre, apellidoP) VALUES (?, ?, 'Por enrolar', 'Por enrolar')");
         $stmtInsert = $pdo->prepare("INSERT INTO asistencia (rut_funcionario, fecha, hora, tipo_marca) VALUES (?, ?, ?, ?)");
         
         $creados = 0;
@@ -70,7 +57,16 @@ try {
         foreach ($agrupacion as $rut => $fechas) {
             $stmtCheck->execute([$rut]);
             if ($stmtCheck->fetchColumn() == 0) {
-                $stmtAutoEnrolar->execute([$rut]);
+                // LÓGICA DE AUTO-GENERACIÓN DE CÓDIGO (Igual que en el frontend JS)
+                // 1. Tomamos el RUT (sin puntos ni guion) pero sin el dígito verificador (le quitamos el último caracter)
+                $rutBase = substr($rut, 0, -1); 
+                // 2. Generamos 5 números aleatorios (entre 10000 y 99999)
+                $sufijoAleatorio = rand(10000, 99999);
+                // 3. Los unimos
+                $codigoGenerado = $rutBase . $sufijoAleatorio;
+
+                // Ejecutamos el insert con el nuevo código
+                $stmtAutoEnrolar->execute([$rut, $codigoGenerado]);
                 $nuevos++;
             }
 

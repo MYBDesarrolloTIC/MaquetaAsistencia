@@ -133,9 +133,23 @@ class Asistencia {
                 for ($i = $inicio; $i <= $fin; $i += 86400) {
                     if ((int)date('m', $i) == $mes) {
                         $diaLicencia = (int)date('d', $i);
-                        // Si no hay marcas en ese día, le ponemos la etiqueta de licencia para que JS lo pinte
+                        
+                        // Si no hay marcas en ese día, le ponemos la etiqueta de licencia
                         if (!isset($dias[$diaLicencia])) {
-                            $dias[$diaLicencia] = ['entrada' => null, 'salida' => null, 'foto_entrada' => null, 'foto_salida' => null, 'estado_especial' => $estadoPintar];
+                            
+                            // CALCULAMOS SI ES LUNES(1) A VIERNES(5) PARA DARLE 8 HORAS (480 MINUTOS)
+                            $diaSemana = (int)date('N', $i);
+                            $minutosLicencia = ($diaSemana >= 1 && $diaSemana <= 5) ? 480 : 0;
+
+                            // TU CÓDIGO ORIGINAL, SOLO LE AGREGAMOS LOS MINUTOS AL FINAL
+                            $dias[$diaLicencia] = [
+                                'entrada' => null, 
+                                'salida' => null, 
+                                'foto_entrada' => null, 
+                                'foto_salida' => null, 
+                                'estado_especial' => $estadoPintar,
+                                'minutos_totales' => $minutosLicencia // <--- AQUÍ SE ASIGNAN LAS 8 HORAS
+                            ];
                         }
                     }
                 }
@@ -143,10 +157,9 @@ class Asistencia {
 
             $calendario = [];
             foreach ($dias as $dia => $datos) {
-                // Si el día está marcado como licencia, nos saltamos las matemáticas y lo mandamos directo
                 if ($datos['estado_especial']) {
                     $calendario[$dia] = [
-                        'estado' => $datos['estado_especial'], // 'licencia' o 'vacaciones'
+                        'estado' => $datos['estado_especial'], 
                         'entrada' => '--:--',
                         'salida' => '--:--',
                         'trabajado' => '00:00',

@@ -2,15 +2,17 @@
    1. VARIABLES GLOBALES Y UTILIDADES
    ========================================================================= */
 let turnoABorrarId = null;
-let modalFormTurnoInstance = null;
-let modalBorrarTurnoInstance = null;
-let funcionarioAborrarId = null;
 let seccionABorrarId = null;
+let funcionarioAborrarId = null;
+let tipoItemABorrar = ''; // 'turno' o 'seccion'
+let nombreItemABorrar = '';
+
+let modalFormTurnoInstance = null;
 let fechaActualVisualizacion = new Date();
 
 const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-// Objeto global seguro para guardar los datos del calendario y fotos sin romper el HTML
+// Objeto global seguro para guardar los datos del calendario y fotos
 window.calendarioData = window.calendarioData || {};
 
 /* =========================================================================
@@ -76,7 +78,6 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     bsToast.show();
     toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
-
 /* =========================================================================
    3. INICIALIZACIÓN DEL DOCUMENTO
    ========================================================================= */
@@ -92,8 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
     
-    inicializarBuscadorUniversal('buscar-secciones', 'contenedor-secciones', '.col-md-4, .col-lg-3');
-    inicializarBuscadorUniversal('buscar-turnos', 'contenedor-turnos', '.col-md-4, .col-lg-3');
+    // INICIALIZAR BUSCADORES
+    inicializarBuscadorUniversal('buscar-secciones', 'contenedor-secciones', '.col-12');
+    inicializarBuscadorUniversal('buscar-turnos', 'contenedor-turnos', '.col-12');
     inicializarBuscadorUniversal('buscador-funcionarios', 'contenedor-funcionarios', '.list-group-item');
 
     if (document.getElementById('dash-total-func')) cargarEstadisticasDashboard();
@@ -115,9 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formModalEl = document.getElementById('modalFormTurno');
     if (formModalEl) modalFormTurnoInstance = new bootstrap.Modal(formModalEl);
-
-    const borrarModalEl = document.getElementById('modalBorrarTurno');
-    if (borrarModalEl) modalBorrarTurnoInstance = new bootstrap.Modal(borrarModalEl);
 
     const inputEntrada = document.getElementById('turno_entrada');
     const inputSalida = document.getElementById('turno_salida');
@@ -144,8 +143,40 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') { e.preventDefault(); guardarSeccion(); }
         });
     }
-});
 
+    // =========================================================
+    // NUEVO: MEJORAS UX PARA EL MODAL DE SEGURIDAD EXTREMA
+    // =========================================================
+    const modalBorrarSeguroEl = document.getElementById('modalBorrarSeguro');
+
+    if (modalBorrarSeguroEl) {
+        // 1. Auto-Focus: El cursor salta solo a la contraseña al abrir el modal
+        modalBorrarSeguroEl.addEventListener('shown.bs.modal', function () {
+            if (inputPasswordBorrado) inputPasswordBorrado.focus();
+        });
+    }
+
+    if (inputPasswordBorrado) {
+        // 2. Ejecutar con ENTER
+        inputPasswordBorrado.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Evita que la página intente recargarse
+                ejecutarBorradoSeguro();
+            }
+        });
+    }
+
+    const inputPasswordBorrado = document.getElementById('password-admin-borrado');
+    if (inputPasswordBorrado) {
+        // 2. Tecla Enter: Ejecutar borrado al presionar Enter sin usar el mouse
+        inputPasswordBorrado.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                ejecutarBorradoSeguro();
+            }
+        });
+    }
+});
 /* =========================================================================
    MÓDULO 1: LOGIN
    ========================================================================= */
@@ -177,7 +208,6 @@ async function procesarLogin(e) {
         mostrarNotificacion("Error al conectar con el servidor.", "error");
     }
 }
-
 /* =========================================================================
    MÓDULO 2: TURNOS
    ========================================================================= */
@@ -221,10 +251,12 @@ async function cargarTarjetasTurnos() {
                             </div>
                         </div>
                         <div class="card-footer bg-white border-top-0 p-4 pt-0 d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-primary flex-grow-1 fw-bold" onclick="editarTurno(${turno.IDturno}, '${turno.nombre}', '${turno.hora_entrada}', '${turno.hora_salida}')">
+                            <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1 fw-bold" onclick="editarTurno(${turno.IDturno}, '${turno.nombre}', '${turno.hora_entrada}', '${turno.hora_salida}')">
                                 <i class="bi bi-pencil-square me-1"></i> Editar
                             </button>
-                            <button class="btn btn-sm btn-outline-danger px-3" onclick="confirmarBorrarTurno(${turno.IDturno})"><i class="bi bi-trash"></i></button>
+                            <button type="button" class="btn btn-sm btn-outline-danger px-3" onclick="confirmarBorrarTurno(${turno.IDturno}, '${turno.nombre}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
                         </div>
                     </div>
                 </div>`;
@@ -257,7 +289,13 @@ function editarTurno(id, nombre, entrada, salida) {
     document.getElementById('turno_salida').value = salida.substring(0, 5);
     document.getElementById('tituloModalTurno').innerHTML = '<i class="bi bi-pencil-square me-2"></i> Editar Turno';
     calcularTiempoJornadaFormulario();
-    modalFormTurnoInstance.show();
+    
+    // Llamado infalible del modal (evita el error si la variable global falla)
+    const modalEl = document.getElementById('modalFormTurno');
+    if (modalEl) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
 }
 
 async function guardarTurno() {
@@ -289,24 +327,6 @@ async function guardarTurno() {
     }
 }
 
-function confirmarBorrarTurno(id) {
-    turnoABorrarId = id;
-    modalBorrarTurnoInstance.show();
-}
-
-async function ejecutarBorrarTurno() {
-    if (turnoABorrarId) {
-        const respuesta = await apiTurnos.deleteTurno(turnoABorrarId);
-        if (respuesta.status === 1) {
-            mostrarNotificacion("Turno eliminado correctamente.", "delete");
-            modalBorrarTurnoInstance.hide();
-            cargarTarjetasTurnos();
-        } else {
-            mostrarNotificacion(respuesta.message, "error");
-        }
-    }
-}
-
 function calcularTiempoJornadaFormulario() {
     const entradaVal = document.getElementById('turno_entrada').value;
     const salidaVal = document.getElementById('turno_salida').value;
@@ -332,33 +352,80 @@ function calcularHorasUI(entradaVal, salidaVal) {
 function generarCodigoAutomatico() {
     const rutInput = document.getElementById('enrolar_rut');
     if (!rutInput) return;
-
     const inputCodigo = document.getElementById('enrolar_codigo');
     const svgBarcode = document.getElementById('barcode');
     const placeholder = document.getElementById('barcode-placeholder');
+    const btnDescargar = document.getElementById('btn-descargar-png');
 
     if (rutInput.value.trim() === '') {
-        inputCodigo.value = '';
-        inputCodigo.dataset.sufijo = '';
-        svgBarcode.style.display = 'none';
+        inputCodigo.value = ''; inputCodigo.dataset.sufijo = '';
+        svgBarcode.style.display = 'none'; 
         placeholder.style.display = 'block';
+        if (btnDescargar) btnDescargar.style.display = 'none'; 
+        return;
+    }
+    
+    let rutLimpio = rutInput.value.replace(/[^0-9kK]/gi, '');
+    if (rutLimpio.length > 2) {
+        if (!inputCodigo.dataset.sufijo) { inputCodigo.dataset.sufijo = Math.floor(10000 + Math.random() * 90000); }
+        let codigoFinal = rutLimpio + inputCodigo.dataset.sufijo;
+        inputCodigo.value = codigoFinal;
+        
+        if (typeof JsBarcode !== 'undefined') { 
+            JsBarcode("#barcode", codigoFinal, { 
+                format: "CODE128", 
+                lineColor: "#212529", 
+                width: 2, 
+                height: 70, 
+                displayValue: true, 
+                margin: 10 
+            }); 
+        }
+        
+        placeholder.style.display = 'none'; 
+        svgBarcode.style.display = 'block';
+        if (btnDescargar) btnDescargar.style.display = 'block'; 
+    } else {
+        if (btnDescargar) btnDescargar.style.display = 'none';
+    }
+}
+
+function descargarCodigoDeBarrasPNG() {
+    const svgElement = document.getElementById("barcode");
+    if (!svgElement || svgElement.style.display === 'none') {
+        mostrarNotificacion("No hay código de barras para descargar.", "warning");
         return;
     }
 
-    let rutLimpio = rutInput.value.replace(/[^0-9kK]/gi, '');
-    if (rutLimpio.length > 2) {
-        if (!inputCodigo.dataset.sufijo) {
-            inputCodigo.dataset.sufijo = Math.floor(10000 + Math.random() * 90000);
-        }
-        let codigoFinal = rutLimpio + inputCodigo.dataset.sufijo;
-        inputCodigo.value = codigoFinal;
+    const inputCodigo = document.getElementById('enrolar_codigo').value;
+    const rutValue = document.getElementById('enrolar_rut').value.trim();
+    const nombreArchivo = rutValue ? `credencial_${rutValue.replace(/[^0-9kK]/gi, '')}.png` : `codigo_${inputCodigo}.png`;
 
-        if (typeof JsBarcode !== 'undefined') {
-            JsBarcode("#barcode", codigoFinal, { format: "CODE128", lineColor: "#212529", width: 2, height: 70, displayValue: false, margin: 0 });
-        }
-        placeholder.style.display = 'none';
-        svgBarcode.style.display = 'block';
-    }
+    const canvas = document.createElement("canvas");
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const img = new Image();
+    
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    
+    img.onload = function() {
+        canvas.width = img.width + 40;
+        canvas.height = img.height + 40;
+        const ctx = canvas.getContext("2d");
+        
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 20, 20);
+        
+        const pngUrl = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.href = pngUrl;
+        downloadLink.download = nombreArchivo;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        mostrarNotificacion("Código de barras descargado correctamente.", "success");
+    };
 }
 
 async function guardarNuevoFuncionario() {
@@ -430,16 +497,24 @@ async function cargarSelectSeccionesEnrolar() {
    MÓDULO 4: FUNCIONARIOS, CALENDARIO Y POPUP SEGURO
    ========================================================================= */
 async function cargarListaFuncionarios() {
-    const contenedor = document.getElementById('contenedor-funcionarios');
-    if (!contenedor) return;
+    const contenedorActivos = document.getElementById('contenedor-funcionarios');
+    const contenedorPendientes = document.getElementById('contenedor-no-enrolados');
+    
+    if (!contenedorActivos) return;
 
     try {
         const res = await apiFuncionarios.getFuncionarios();
         const resSecciones = await apiSecciones.getSecciones();
         const resTurnos = await apiTurnos.getTurnos();
-        contenedor.innerHTML = '';
+        
+        contenedorActivos.innerHTML = '';
+        if (contenedorPendientes) contenedorPendientes.innerHTML = '';
 
         if (res.status === 1 && res.data && res.data.length > 0) {
+            
+            let htmlActivos = '';
+            let htmlPendientes = '';
+
             res.data.forEach(f => {
                 const safeId = f.rut.replace(/[^a-zA-Z0-9]/g, '');
                 const colId = `edit-func-${safeId}`;
@@ -462,11 +537,17 @@ async function cargarListaFuncionarios() {
                     });
                 }
 
-                contenedor.innerHTML += `
-                <div class="list-group-item p-0 funcionario-item border-start-danger shadow-sm mb-2 rounded">
-                    <div class="row m-0 align-items-center py-3 px-3 bg-white fila-visible cursor-pointer" onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'calendario', event)">
+                const esPendiente = (f.nombre.toLowerCase().includes('por enrolar') || f.apellidoP.toLowerCase().includes('por enrolar') || f.nombre.toLowerCase().includes('funcionario'));
+
+                const colorBorde = esPendiente ? 'border-start-warning border-warning' : 'border-start-danger';
+                const colorFondo = esPendiente ? 'bg-warning-light' : 'bg-white';
+                const iconoAlerta = esPendiente ? `<i class="bi bi-exclamation-triangle-fill text-warning me-2" title="Requiere enrolamiento"></i>` : `<i class="bi bi-person-circle me-2 text-secondary"></i>`;
+
+                let filaHTML = `
+                <div class="list-group-item p-0 funcionario-item ${colorBorde} shadow-sm mb-2 rounded">
+                    <div class="row m-0 align-items-center py-3 px-3 ${colorFondo} fila-visible cursor-pointer" onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'calendario', event)">
                         <div class="col-12 col-lg-2 ps-lg-3 mb-2 mb-lg-0 fw-semibold text-muted font-monospace">${formatearRUT(f.rut)}</div>
-                        <div class="col-12 col-lg-3 mb-2 mb-lg-0 text-black fw-bold text-truncate"><i class="bi bi-person-circle me-2 text-secondary"></i>${f.nombre} ${f.apellidoP}</div>
+                        <div class="col-12 col-lg-3 mb-2 mb-lg-0 text-black fw-bold text-truncate">${iconoAlerta}${f.nombre} ${f.apellidoP}</div>
                         <div class="col-6 col-lg-3 text-truncate text-muted d-none d-md-block">${textoSeccion}</div>
                         <div class="col-6 col-lg-2 d-none d-md-block"><span class="badge bg-light text-dark border px-2 py-1"><i class="bi bi-clock me-1"></i>${textoTurno}</span></div>
                         <div class="col-12 col-lg-2 text-end mt-3 mt-lg-0 pe-lg-3">
@@ -480,7 +561,7 @@ async function cargarListaFuncionarios() {
                     </div>
                     
                     <div id="${colId}" class="collapse panel-desplegado border-top border-bottom border-2 border-danger" data-bs-parent="#contenedor-funcionarios">
-                        <div class="p-3 p-md-4 p-xl-5">
+                        <div class="p-3 p-md-4 p-xl-5 bg-white">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h4 class="fw-bold text-black mb-0 fs-5 fs-md-4"><i class="bi bi-person-vcard me-2 text-danger-yb"></i> Panel del Funcionario</h4>
                                 <button type="button" class="btn-close" aria-label="Close" onclick="cerrarPanelFuncionario('${safeId}', event)"></button>
@@ -557,9 +638,22 @@ async function cargarListaFuncionarios() {
                         </div>
                     </div>
                 </div>`;
+
+                if (esPendiente) {
+                    htmlPendientes += filaHTML;
+                } else {
+                    htmlActivos += filaHTML;
+                }
             });
+
+            contenedorActivos.innerHTML = htmlActivos || '<div class="p-4 text-center text-muted fw-bold">No hay personal activo registrado.</div>';
+            if (contenedorPendientes) {
+                contenedorPendientes.innerHTML = htmlPendientes || '<div class="p-4 text-center text-muted fw-bold">No hay funcionarios pendientes de enrolamiento.</div>';
+            }
+
         } else {
-            contenedor.innerHTML = '<div class="alert alert-warning text-center fw-bold shadow-sm p-4 m-3 fs-5">No hay funcionarios registrados.</div>';
+            contenedorActivos.innerHTML = '<div class="alert alert-warning text-center fw-bold shadow-sm p-4 m-3 fs-5">No hay funcionarios registrados.</div>';
+            if (contenedorPendientes) contenedorPendientes.innerHTML = '';
         }
     } catch (error) {
         console.error("Error cargando lista:", error);
@@ -621,7 +715,6 @@ async function cargarDatosYDibujarCalendario(safeId, rutReal, fecha) {
         const res = await req.json();
         const datosMes = res.status === 1 ? res.data : {};
         
-        // ¡LA MAGIA DE LA MEMORIA SEGURA!
         window.calendarioData = window.calendarioData || {};
         window.calendarioData[safeId] = datosMes;
         
@@ -665,18 +758,25 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
         let bgClass = 'cal-day-empty'; 
         let contenidoCelda = `<div class="fw-bold text-center w-100 h-100 d-flex justify-content-center align-items-center numero-calendario">${dia}</div>`;
 
+        const diaDeLaSemana = new Date(año, mes, dia).getDay();
+
         if (infoDia) {
             if (infoDia.estado === 'licencia') {
                 bgClass = 'cal-day-licencia';
                 contenidoCelda = `<div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center"><div class="fw-bold fs-6 mb-1">${dia}</div><div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-bandaid"></i><br>Licencia</div></div>`;
+                if (diaDeLaSemana >= 1 && diaDeLaSemana <= 5) totalMinutosMes += 480; 
+
             } else if (infoDia.estado === 'vacaciones') {
                 bgClass = 'cal-day-vacaciones';
                 contenidoCelda = `<div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center"><div class="fw-bold fs-6 mb-1">${dia}</div><div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-airplane"></i><br>Feriado</div></div>`;
+                if (diaDeLaSemana >= 1 && diaDeLaSemana <= 5) totalMinutosMes += 480; 
+
             } else if (infoDia.estado === 'falta') {
                 bgClass = 'dia-danger'; 
                 contenidoCelda = `<div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center"><div class="fw-bold fs-6 mb-1">${dia}</div><div class="fw-bold text-danger" style="font-size: 0.7rem;"><i class="bi bi-x-circle"></i><br>Ausente</div></div>`;
             } else {
                 bgClass = infoDia.estado === 'verde' ? 'cal-day-success' : 'cal-day-warning';
+                
                 totalMinutosMes += infoDia.minutos_totales || 0;
                 let badgeExtra = '';
 
@@ -716,19 +816,16 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
     contenedor.innerHTML = htmlCalendario;
 }
 
-// ESTA ES LA FUNCIÓN NUEVA BLINDADA CONTRA ERRORES "UNDEFINED"
 function verDetalleAsistencia(safeId, dia, mes, año) {
     const modalEl = document.getElementById('modalDetalleDia');
     if (!modalEl) return;
 
-    // Lectura ultra-segura de la memoria
     let datosDelMes = {};
     if (window.calendarioData && window.calendarioData[safeId]) {
         datosDelMes = window.calendarioData[safeId];
     }
     const infoDia = datosDelMes[dia] || {};
 
-    // Filtro estricto: forzamos valores por defecto si no existen
     const estado = (infoDia.estado && String(infoDia.estado) !== "undefined") ? infoDia.estado : 'vacio';
     const entrada = (infoDia.entrada && String(infoDia.entrada) !== "undefined") ? infoDia.entrada : '--:--';
     const salida = (infoDia.salida && String(infoDia.salida) !== "undefined") ? infoDia.salida : '--:--';
@@ -736,10 +833,8 @@ function verDetalleAsistencia(safeId, dia, mes, año) {
     const fotoEntrada = (infoDia.foto_entrada && String(infoDia.foto_entrada) !== "undefined") ? infoDia.foto_entrada : '';
     const fotoSalida = (infoDia.foto_salida && String(infoDia.foto_salida) !== "undefined") ? infoDia.foto_salida : '';
 
-    // Colocar la fecha
     document.getElementById('detalle_fecha').innerText = `${dia} de ${nombresMeses[mes]}, ${año}`;
     
-    // Colocar el Badge (Etiqueta de estado)
     const badge = document.getElementById('detalle_estado_badge');
     if (estado === 'verde') {
         badge.className = 'badge bg-success rounded-pill px-3 py-1 fs-6 text-white';
@@ -763,14 +858,12 @@ function verDetalleAsistencia(safeId, dia, mes, año) {
         badge.innerText = 'Sin Registro';
     }
 
-    // Encender/Apagar las cajas de fotos
     const cajaFotos = document.getElementById('detalle_caja_fotos');
     const imgE = document.getElementById('detalle_img_entrada');
     const imgS = document.getElementById('detalle_img_salida');
     const colE = document.getElementById('col_foto_entrada');
     const colS = document.getElementById('col_foto_salida');
 
-    // Si la foto tiene contenido real, la mostramos
     if (fotoEntrada.length > 50 || fotoSalida.length > 50) {
         cajaFotos.classList.remove('d-none'); 
         if (fotoEntrada.length > 50) {
@@ -783,14 +876,12 @@ function verDetalleAsistencia(safeId, dia, mes, año) {
             colS.classList.remove('d-none');
         } else { colS.classList.add('d-none'); }
     } else {
-        cajaFotos.classList.add('d-none'); // Ocultar bloque si NO hay fotos
+        cajaFotos.classList.add('d-none');
     }
 
-    // Colocar las horas de entrada y salida
     document.getElementById('detalle_entrada').innerText = entrada;
     document.getElementById('detalle_salida').innerText = salida;
 
-    // Mostrar horas extras si existen
     const filaExtra = document.getElementById('fila_extra');
     if (extra !== '00:00') {
         filaExtra.style.setProperty('display', 'flex', 'important');
@@ -826,7 +917,6 @@ async function guardarEdicionFuncionario(rutOriginal) {
 
 function confirmarBorradoFuncionario(rut) {
     funcionarioAborrarId = rut;
-    seccionABorrarId = null;
     const modal = new bootstrap.Modal(document.getElementById('modalBorrar'));
     modal.show();
 }
@@ -877,7 +967,6 @@ async function guardarAusencia() {
         } else { mostrarNotificacion("Error: " + res.message, "error"); }
     } catch (error) { mostrarNotificacion("Error de conexión al registrar.", "error"); }
 }
-
 /* =========================================================================
    MÓDULO 5: SECCIONES
    ========================================================================= */
@@ -903,10 +992,10 @@ async function cargarListaSecciones() {
                         </div>
                     </div>
                     <div class="card-footer bg-white border-top-0 p-4 pt-0 d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-dark flex-grow-1 fw-bold" onclick="editarSeccion(${sec.id}, '${sec.nombre}')">
+                        <button type="button" class="btn btn-sm btn-outline-dark flex-grow-1 fw-bold" onclick="editarSeccion(${sec.id}, '${sec.nombre}')">
                             <i class="bi bi-pencil-square me-1"></i> Editar
                         </button>
-                        <button class="btn btn-sm btn-outline-danger px-3" onclick="confirmarBorrarSeccion(${sec.id})">
+                        <button type="button" class="btn btn-sm btn-outline-danger px-3" onclick="confirmarBorrarSeccion(${sec.id}, '${sec.nombre}')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -946,19 +1035,17 @@ async function guardarSeccion() {
 function editarSeccion(id, nombre) {
     document.getElementById('seccion_id').value = id;
     document.getElementById('seccion_nombre').value = nombre;
+    
+    // Llamado infalible del modal
     const modalEl = document.getElementById('modalFormSeccion');
-    if (modalEl) new bootstrap.Modal(modalEl).show();
-}
-
-function confirmarBorrarSeccion(id) {
-    seccionABorrarId = id;
-    funcionarioAborrarId = null;
-    const modal = new bootstrap.Modal(document.getElementById('modalBorrar'));
-    modal.show();
+    if (modalEl) {
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
 }
 
 /* =========================================================================
-   MÓDULO 6: TERMINAL DE ESCÁNER
+   MÓDULO 6: TERMINAL DE ESCÁNER (CON AUDIOS)
    ========================================================================= */
 function actualizarRelojYFecha() {
     const reloj = document.getElementById('reloj-digital');
@@ -1039,6 +1126,7 @@ if (formEscanerGlobal) {
 
         if (!codigo || codigo.length < 8) {
             mostrarNotificacion("Código inválido. Verifique su credencial.", "warning");
+            try { new Audio('../../assets/audio/error.mp3').play(); } catch(err){}
             inputCodigo.value = ''; return;
         }
 
@@ -1058,16 +1146,31 @@ if (formEscanerGlobal) {
                 body: JSON.stringify({ action: 'registrarMarca', codigo: codigo, tipo: tipoSeleccionado, foto: fotoBase64 })
             });
             const res = await req.json();
+            
             if (res.status === 1) {
                 mostrarNotificacion(res.message || "Marca registrada con éxito", "success");
                 radioSeleccionado.checked = false; 
+
+                // Reproducir Audio de Éxito
+                try {
+                    let rutaAudio = (tipoSeleccionado === 'entrada') 
+                        ? '../../assets/audio/entrada.mp3' 
+                        : '../../assets/audio/salida.mp3';
+                    let sonidoExito = new Audio(rutaAudio);
+                    sonidoExito.play();
+                } catch (audioErr) {}
+
             } else {
                 mostrarNotificacion(res.message || "Error al registrar la marca", "error");
+                try { new Audio('../../assets/audio/error.mp3').play(); } catch (audioErr) {}
             }
+            
         } catch (error) {
             console.error("Error al registrar:", error);
             mostrarNotificacion("Error de conexión al servidor.", "error");
+            try { new Audio('../../assets/audio/error.mp3').play(); } catch(err){}
         }
+        
         inputCodigo.value = '';
         inputCodigo.focus();
     });
@@ -1160,17 +1263,71 @@ async function ejecutarBorrarUsuario() {
 }
 
 /* =========================================================================
-   MÓDULO 8: DASHBOARD INICIO
+   MÓDULO 8: DASHBOARD INICIO (CON AVISOS INTELIGENTES)
    ========================================================================= */
 async function cargarEstadisticasDashboard() {
     try {
         const req = await fetch('../../controller/dashboard_controller.php?action=getStats');
         const res = await req.json();
+        
         if (res.status === 1) {
-            document.getElementById('dash-total-func').innerHTML = res.data.total_funcionarios;
-            document.getElementById('dash-presentes').innerHTML = res.data.presentes_hoy;
-            document.getElementById('dash-atrasos').innerHTML = res.data.atrasos_hoy;
-            document.getElementById('dash-licencias').innerHTML = res.data.licencias_activas;
+            document.getElementById('dash-total-func').innerHTML = res.data.total_funcionarios || '0';
+            document.getElementById('dash-presentes').innerHTML = res.data.presentes_hoy || '0';
+            document.getElementById('dash-atrasos').innerHTML = res.data.atrasos_hoy || '0';
+            document.getElementById('dash-licencias').innerHTML = res.data.licencias_activas || '0';
+
+            const contenedorAvisos = document.getElementById('lista-avisos');
+            if (contenedorAvisos) {
+                let htmlAvisos = '';
+
+                if (res.data.pendientes_enrolar && parseInt(res.data.pendientes_enrolar) > 0) {
+                    htmlAvisos += `
+                        <li class="list-group-item d-flex justify-content-between align-items-start border-0 px-0 text-black mb-3">
+                            <i class="bi bi-exclamation-triangle-fill text-warning me-3 mt-1 fs-3"></i>
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">Funcionarios sin credencial</div>
+                                <span class="text-muted d-block mb-1">Tienes <b>${res.data.pendientes_enrolar}</b> funcionario(s) "Por Enrolar" en el sistema.</span>
+                                <a href="VistaAsistencia.php" class="btn btn-sm btn-outline-warning fw-bold px-3 mt-2">Ir a enrolarlos</a>
+                            </div>
+                        </li>
+                    `;
+                }
+
+                if (res.data.licencias_activas && parseInt(res.data.licencias_activas) > 0) {
+                    htmlAvisos += `
+                        <li class="list-group-item d-flex justify-content-between align-items-start border-0 px-0 text-black mb-3">
+                            <i class="bi bi-file-medical-fill text-primary me-3 mt-1 fs-3"></i>
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">Licencias y Feriados Activos</div>
+                                <span class="text-muted">El día de hoy hay <b>${res.data.licencias_activas}</b> funcionario(s) con licencia médica o vacaciones.</span>
+                            </div>
+                        </li>
+                    `;
+                }
+
+                if (res.data.atrasos_hoy && parseInt(res.data.atrasos_hoy) > 0) {
+                    htmlAvisos += `
+                        <li class="list-group-item d-flex justify-content-between align-items-start border-0 px-0 text-black mb-3">
+                            <i class="bi bi-clock-history text-danger me-3 mt-1 fs-3"></i>
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">Atrasos registrados</div>
+                                <span class="text-muted">Se han detectado <b>${res.data.atrasos_hoy}</b> atraso(s) en la jornada de hoy.</span>
+                            </div>
+                        </li>
+                    `;
+                }
+
+                if (htmlAvisos === '') {
+                    htmlAvisos = `
+                        <div class="alert alert-success text-center fw-bold shadow-sm border-0 d-flex flex-column align-items-center py-4">
+                            <i class="bi bi-check-circle-fill text-success mb-2" style="font-size: 2.5rem;"></i>
+                            ¡Todo en orden! No hay avisos pendientes en el sistema.
+                        </div>
+                    `;
+                }
+
+                contenedorAvisos.innerHTML = htmlAvisos;
+            }
         } else {
             mostrarCerosDashboard();
             mostrarNotificacion("Error al cargar estadísticas: " + res.message, "warning");
@@ -1180,38 +1337,76 @@ async function cargarEstadisticasDashboard() {
         mostrarNotificacion("Error crítico al conectar con el servidor.", "error");
     }
 }
+
 function mostrarCerosDashboard() {
     document.getElementById('dash-total-func').innerHTML = '0';
     document.getElementById('dash-presentes').innerHTML = '0';
     document.getElementById('dash-atrasos').innerHTML = '0';
     document.getElementById('dash-licencias').innerHTML = '0';
+    
+    const contenedorAvisos = document.getElementById('lista-avisos');
+    if (contenedorAvisos) {
+        contenedorAvisos.innerHTML = '<div class="alert alert-secondary text-center">No se pudo cargar la información.</div>';
+    }
 }
-
 /* =========================================================================
-   MÓDULO 9: BORRADO GLOBAL E IMPORTACIÓN CSV
+   MÓDULO 9: BORRADO GLOBAL (FUNCIONARIOS) E IMPORTACIÓN CSV
    ========================================================================= */
-async function ejecutarBorrado() {
-    const modalEl = document.getElementById('modalBorrar');
-    if (modalEl) { const bsModal = bootstrap.Modal.getInstance(modalEl); if (bsModal) bsModal.hide(); }
+async function ejecutarBorradoSeguro() {
+    const passwordInput = document.getElementById('password-admin-borrado').value;
 
-    if (typeof funcionarioAborrarId !== 'undefined' && funcionarioAborrarId !== null) {
-        try {
-            const res = await apiFuncionarios.deleteFuncionario(funcionarioAborrarId);
-            if (res.status === 1) { mostrarNotificacion("Funcionario eliminado correctamente.", "delete"); cargarListaFuncionarios(); } 
-            else { mostrarNotificacion("No se pudo eliminar: " + res.message, "error"); }
-        } catch (error) { mostrarNotificacion("Error de conexión al eliminar.", "error"); }
-        funcionarioAborrarId = null;
+    if (!passwordInput) {
+        mostrarNotificacion("Debe ingresar la contraseña de autorización.", "warning");
+        return;
     }
-    else if (typeof seccionABorrarId !== 'undefined' && seccionABorrarId !== null) {
-        try {
-            const res = await apiSecciones.deleteSeccion(seccionABorrarId);
-            if (res.status === 1) { mostrarNotificacion("Sección eliminada correctamente.", "delete"); if (typeof cargarListaSecciones === "function") cargarListaSecciones(); } 
-            else { mostrarNotificacion("Error al eliminar la sección: " + res.message, "error"); }
-        } catch (error) { mostrarNotificacion("Error de conexión al eliminar.", "error"); }
-        seccionABorrarId = null;
+
+    const btnConfirmar = document.getElementById('btn-confirmar-borrado-seguro');
+    btnConfirmar.disabled = true;
+    btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Validando...';
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'validarPassword');
+        formData.append('password', passwordInput);
+
+        // Envía la contraseña a validar al PHP
+        const reqValidar = await fetch('../../controller/seguridad_controller.php', { method: 'POST', body: formData });
+        const resValidar = await reqValidar.json();
+
+        if (resValidar.status === 1) {
+            // ¡CONTRASEÑA "admin1234" CORRECTA! PROCEDE A BORRAR
+            if (tipoItemABorrar === 'turno' && turnoABorrarId) {
+                const resBorrar = await apiTurnos.deleteTurno(turnoABorrarId);
+                if (resBorrar.status === 1) {
+                    mostrarNotificacion("Turno eliminado correctamente.", "success");
+                    cargarTarjetasTurnos();
+                } else { mostrarNotificacion(resBorrar.message, "error"); }
+            } 
+            else if (tipoItemABorrar === 'seccion' && seccionABorrarId) {
+                const resBorrar = await apiSecciones.deleteSeccion(seccionABorrarId);
+                if (resBorrar.status === 1) {
+                    mostrarNotificacion("Sección eliminada correctamente.", "success");
+                    cargarListaSecciones();
+                } else { mostrarNotificacion(resBorrar.message, "error"); }
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('modalBorrarSeguro')).hide();
+            turnoABorrarId = null;
+            seccionABorrarId = null;
+
+        } else {
+            // CONTRASEÑA INCORRECTA
+            mostrarNotificacion(resValidar.message, "error");
+            document.getElementById('password-admin-borrado').value = '';
+            document.getElementById('password-admin-borrado').focus();
+        }
+    } catch (error) {
+        mostrarNotificacion("Error de conexión al validar la contraseña.", "error");
+    } finally {
+        btnConfirmar.disabled = false;
+        btnConfirmar.innerHTML = '<i class="bi bi-trash-fill me-2"></i>Confirmar Eliminación';
     }
 }
-
 const formImportar = document.getElementById('form-importar-csv');
 if (formImportar) {
     formImportar.addEventListener('submit', async (e) => {
@@ -1223,7 +1418,6 @@ if (formImportar) {
         formData.append('action', 'importar'); formData.append('archivo_csv', fileInput.files[0]);
         try {
             const req = await fetch('../../controller/migracion_controller.php', { method: 'POST', body: formData });
-            alert("JSON: ");
             const res = await req.json();
             if (res.status === 1) {
                 mostrarNotificacion(res.message, "success");
@@ -1239,13 +1433,137 @@ function inicializarBuscadorUniversal(idInput, idContenedor, selectorFila) {
     const input = document.getElementById(idInput);
     const contenedor = document.getElementById(idContenedor);
     if (!input || !contenedor) return;
+
+    // Limpieza agresiva en 3 tiempos para ganarle al autocompletado del navegador
+    input.value = '';
+    setTimeout(() => input.value = '', 100);
+    setTimeout(() => input.value = '', 500);
+
     input.addEventListener('input', function () {
         const termino = this.value.toLowerCase().trim();
         const filas = contenedor.querySelectorAll(selectorFila);
         filas.forEach(fila => {
             const contenido = fila.textContent.toLowerCase();
-            if (contenido.includes(termino)) { fila.style.setProperty('display', 'flex', 'important'); } 
-            else { fila.style.setProperty('display', 'none', 'important'); }
+            if (contenido.includes(termino)) { 
+                fila.style.display = ''; 
+            } else { 
+                fila.style.setProperty('display', 'none', 'important'); 
+            }
         });
     });
+}
+/* =========================================================================
+   MÓDULO 10: SEGURIDAD DE BORRADO EXTREMA (TURNOS Y SECCIONES)
+   ========================================================================= */
+async function confirmarBorrarTurno(id, nombre) {
+    turnoABorrarId = id;
+    tipoItemABorrar = 'turno';
+    nombreItemABorrar = nombre;
+    prepararModalSeguroBorrado('turno', id, nombre);
+}
+
+async function confirmarBorrarSeccion(id, nombre) {
+    seccionABorrarId = id;
+    tipoItemABorrar = 'seccion';
+    nombreItemABorrar = nombre;
+    prepararModalSeguroBorrado('seccion', id, nombre);
+}
+async function prepararModalSeguroBorrado(tipo, id, nombre) {
+    const modalEl = document.getElementById('modalBorrarSeguro');
+    if (!modalEl) return;
+
+    document.getElementById('password-admin-borrado').value = '';
+    document.getElementById('nombre-item-borrar').innerText = `el registro "${nombre}"`;
+
+    const alertaUso = document.getElementById('alerta-uso-dependencias');
+    const textoUso = document.getElementById('texto-uso-dependencias');
+    alertaUso.classList.add('d-none');
+    
+    const btnConfirmar = document.getElementById('btn-confirmar-borrado-seguro');
+    btnConfirmar.disabled = true;
+    btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verificando...';
+
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+
+    try {
+        const req = await fetch(`../../controller/seguridad_controller.php?action=verificarUso&tipo=${tipo}&id=${id}`);
+        
+        // Verificamos si el archivo PHP realmente existe y no dio error 404/500
+        if (!req.ok) throw new Error("Error HTTP: " + req.status);
+
+        const res = await req.json();
+
+        if (res.status === 1 && res.cantidad > 0) {
+            let palabra = res.cantidad === 1 ? 'funcionario' : 'funcionarios';
+            textoUso.innerHTML = `Actualmente hay <b>${res.cantidad} ${palabra}</b> utilizando este ${tipo}. Si lo eliminas, estos funcionarios quedarán "Sin ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}".`;
+            alertaUso.classList.remove('d-none');
+        } else if (res.status === 0) {
+            mostrarNotificacion("Error del servidor: " + res.message, "warning");
+        }
+
+    } catch (error) {
+        console.error("Error al verificar dependencias", error);
+        mostrarNotificacion("No se pudo contactar al servidor de seguridad.", "error");
+    } finally {
+        // ¡ESTO ES CLAVE! Desbloquea el botón pase lo que pase
+        btnConfirmar.disabled = false;
+        btnConfirmar.innerHTML = '<i class="bi bi-trash-fill me-2"></i>Confirmar Eliminación';
+    }
+}
+async function ejecutarBorradoSeguro() {
+    const passwordInput = document.getElementById('password-admin-borrado').value;
+
+    if (!passwordInput) {
+        mostrarNotificacion("Debe ingresar su contraseña de administrador para continuar.", "warning");
+        return;
+    }
+
+    const btnConfirmar = document.getElementById('btn-confirmar-borrado-seguro');
+    btnConfirmar.disabled = true;
+    btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Validando...';
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'validarPassword');
+        formData.append('password', passwordInput);
+
+        const reqValidar = await fetch('../../controller/seguridad_controller.php', { method: 'POST', body: formData });
+        const resValidar = await reqValidar.json();
+
+        if (resValidar.status === 1) {
+            if (tipoItemABorrar === 'turno' && turnoABorrarId) {
+                const resBorrar = await apiTurnos.deleteTurno(turnoABorrarId);
+                if (resBorrar.status === 1) {
+                    mostrarNotificacion("Turno eliminado correctamente. Los funcionarios han sido desvinculados.", "success");
+                    cargarTarjetasTurnos();
+                } else {
+                    mostrarNotificacion(resBorrar.message, "error");
+                }
+            } 
+            else if (tipoItemABorrar === 'seccion' && seccionABorrarId) {
+                const resBorrar = await apiSecciones.deleteSeccion(seccionABorrarId);
+                if (resBorrar.status === 1) {
+                    mostrarNotificacion("Sección eliminada correctamente. Los funcionarios han sido desvinculados.", "success");
+                    cargarListaSecciones();
+                } else {
+                    mostrarNotificacion(resBorrar.message, "error");
+                }
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('modalBorrarSeguro')).hide();
+            turnoABorrarId = null;
+            seccionABorrarId = null;
+
+        } else {
+            mostrarNotificacion("Contraseña incorrecta. Operación denegada.", "error");
+            document.getElementById('password-admin-borrado').value = '';
+            document.getElementById('password-admin-borrado').focus();
+        }
+    } catch (error) {
+        mostrarNotificacion("Error de conexión al validar la seguridad.", "error");
+    } finally {
+        btnConfirmar.disabled = false;
+        btnConfirmar.innerHTML = '<i class="bi bi-trash-fill me-2"></i>Confirmar Eliminación';
+    }
 }

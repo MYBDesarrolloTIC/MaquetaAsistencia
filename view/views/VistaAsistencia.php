@@ -19,8 +19,11 @@
             </div>
         </div>
 
-        <div class="card border-0 shadow-sm card-dashboard" id="lista-funcionarios-container">
+        <div class="card border-0 shadow-sm card-dashboard mb-4" id="lista-funcionarios-container">
             <div class="card-header bg-white border-bottom fw-bold d-none d-lg-flex text-muted py-3">
+                <div class="col-12"><i class="bi bi-person-check-fill text-success me-2"></i>Personal Activo</div>
+            </div>
+            <div class="bg-light border-bottom fw-bold d-none d-lg-flex text-muted py-2 px-3 small">
                 <div class="col-2 ps-3">RUT</div>
                 <div class="col-3">Nombre Completo</div>
                 <div class="col-3">Sección</div>
@@ -28,8 +31,19 @@
                 <div class="col-2 text-end pe-4">Acciones</div>
             </div>
             
-            <div class="list-group list-group-flush" id="contenedor-funcionarios"></div>
+            <div class="list-group list-group-flush" id="contenedor-funcionarios">
+                </div>
         </div>
+
+        <div class="card border-0 shadow-sm card-dashboard mb-5" style="border-top: 4px solid #ffc107 !important;">
+            <div class="card-header bg-white border-bottom fw-bold d-none d-lg-flex py-3" style="color: #997404;">
+                <div class="col-12"><i class="bi bi-exclamation-circle-fill text-warning me-2"></i>Pendientes de Enrolar</div>
+            </div>
+            
+            <div class="list-group list-group-flush" id="contenedor-no-enrolados">
+                </div>
+        </div>
+        
     </main>
 </div>
 

@@ -80,16 +80,17 @@
 <div class="row">
     <div class="col-12">
         <div class="card border-0 shadow-sm p-4 h-100 border-top-danger-yb">
-            <h3 class="text-black fw-bold mb-4">Avisos del Sistema</h3>
-            <ul class="list-group list-group-flush fs-5">
-                <li class="list-group-item d-flex justify-content-between align-items-start border-0 px-0 text-black mb-3">
-                    <i class="bi bi-info-circle-fill text-danger-yb me-3 mt-1 fs-3"></i>
-                    <div class="ms-2 me-auto">
-                        <div class="fw-bold">Cierre de mes pendiente</div>
-                        <span class="text-muted">Recuerde que el cálculo de horas mensuales debe realizarse antes del día 5.</span>
-                    </div>
-                </li>
+            <h3 class="text-black fw-bold mb-4"><i class="bi bi-bell-fill me-2 text-danger-yb"></i> Avisos del Sistema</h3>
+            
+            <ul class="list-group list-group-flush fs-5" id="lista-avisos">
+                
+                <div class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
+                    <span class="fs-5">Cargando avisos del sistema...</span>
+                </div>
+
             </ul>
+
         </div>
     </div>
 </div>

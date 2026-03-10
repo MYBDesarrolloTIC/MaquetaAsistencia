@@ -1,4 +1,3 @@
-
 <?php include '../includes/header.php'; ?>
 
 <div class="header-seccion">
@@ -63,7 +62,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-12 col-lg-5">
         <div class="card border-0 shadow-sm h-100 border-top-danger-yb">
             <div class="card-body p-4 p-md-5 text-center d-flex flex-column justify-content-center">
@@ -86,6 +84,11 @@
                         <i class="bi bi-arrow-clockwise"></i>
                     </button>
                 </div>
+                
+                <button type="button" id="btn-descargar-png" class="btn btn-success fw-bold w-100 mb-2" style="display: none;" onclick="descargarCodigoDeBarrasPNG()">
+                    <i class="bi bi-download me-2"></i> Descargar Código en PNG
+                </button>
+                
                 <p class="text-xs text-muted fst-italic">Este código será el que deba imprimir en la credencial.</p>
             </div>
         </div>

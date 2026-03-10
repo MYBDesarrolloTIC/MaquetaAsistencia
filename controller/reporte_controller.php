@@ -30,37 +30,75 @@ try {
     die("Error de Base de Datos: " . $e->getMessage());
 }
 
-// 3. Calculamos la asistencia 
+// 3. Calculamos la asistencia base
 $datosMes = Asistencia::obtenerAsistenciaMes($rut, $mes, $anio);
 $nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 $nombreMesStr = $nombresMeses[$mes - 1];
 
-// 4. Lógica de Separación de Horas (Diurnas vs Nocturnas)
+// 4. Lógica de Separación de Horas y Corrección de Licencias
 $minutos_ordinarios = 0;
 $minutos_extra_diurnas = 0;
 $minutos_extra_nocturnas = 0;
 
-foreach ($datosMes as $dia => $info) {
-    if ($info['estado'] !== 'gris') {
-        // Convertir el string de extra "HH:MM" a minutos totales
-        $partes_extra = explode(':', $info['extra']);
+foreach ($datosMes as $dia => &$info) {
+    // Verificar qué día de la semana es (1 = Lunes, 7 = Domingo)
+    $fecha_str = "$anio-" . str_pad($mes, 2, '0', STR_PAD_LEFT) . "-" . str_pad($dia, 2, '0', STR_PAD_LEFT);
+    $dia_semana = date('N', strtotime($fecha_str));
+
+    // REPARACIÓN DE LICENCIAS MÉDICAS Y VACACIONES PARA EL PDF
+    $esLicencia = (isset($info['estado']) && in_array($info['estado'], ['licencia', 'vacaciones'])) || (isset($info['estado_especial']) && in_array($info['estado_especial'], ['licencia', 'vacaciones']));
+    
+    if ($esLicencia) {
+        if ($dia_semana >= 1 && $dia_semana <= 5) {
+            // De Lunes a Viernes: Vale por 8 horas (480 minutos)
+            $info['minutos_totales'] = 480;
+            $info['trabajado'] = "08:00"; 
+        } else {
+            // Sábado o Domingo: Vale 0 horas
+            $info['minutos_totales'] = 0;
+            $info['trabajado'] = "00:00";
+        }
+        // Limpiamos datos visuales de la tabla para que se vea ordenado
+        $info['entrada'] = "---";
+        $info['salida'] = strtoupper($info['estado'] ?? $info['estado_especial']); // Imprime "LICENCIA"
+        $info['extra'] = "00:00";
+        $info['tipo_extra'] = "-";
+    }
+
+    // CÁLCULO DE SUMATORIAS TOTALES DEL MES
+    if (isset($info['estado']) && $info['estado'] !== 'gris') {
+        
+        $extra_str = $info['extra'] ?? '00:00';
+        $partes_extra = explode(':', $extra_str);
         $extra_mins = (int)$partes_extra[0] * 60 + (int)$partes_extra[1];
 
+        $min_trabajados = $info['minutos_totales'] ?? 0;
+
         // Separar minutos ordinarios
-        $min_trabajados = $info['minutos_totales'];
-        $min_ordinarios_dia = $min_trabajados - $extra_mins;
-        if ($min_ordinarios_dia < 0) $min_ordinarios_dia = 0;
+        if ($esLicencia) {
+            $min_ordinarios_dia = $min_trabajados;
+        } else {
+            $min_ordinarios_dia = $min_trabajados - $extra_mins;
+            if ($min_ordinarios_dia < 0) $min_ordinarios_dia = 0;
+        }
 
         $minutos_ordinarios += $min_ordinarios_dia;
 
         // Clasificar las horas extras
-        if ($info['tipo_extra'] === 'Diurna') {
-            $minutos_extra_diurnas += $extra_mins;
-        } elseif ($info['tipo_extra'] === 'Nocturna') {
-            $minutos_extra_nocturnas += $extra_mins;
+        if (isset($info['tipo_extra'])) {
+            if ($info['tipo_extra'] === 'Diurna') {
+                $minutos_extra_diurnas += $extra_mins;
+            } elseif ($info['tipo_extra'] === 'Nocturna') {
+                $minutos_extra_nocturnas += $extra_mins;
+            }
         }
     }
 }
+unset($info); // Romper referencia
+
+// VALIDACIÓN LEGAL DE HORAS EXTRAS (Máximo 40 horas al mes)
+$total_minutos_extras = $minutos_extra_diurnas + $minutos_extra_nocturnas;
+$excede_limite_legal = $total_minutos_extras > (40 * 60);
 
 // Función para formatear minutos a "HH:MM hrs"
 function formatoHoras($minutos_totales) {
@@ -70,7 +108,7 @@ function formatoHoras($minutos_totales) {
     return str_pad($horas, 2, '0', STR_PAD_LEFT) . ':' . str_pad($minutos, 2, '0', STR_PAD_LEFT);
 }
 
-// 5. Generar el nombre del archivo: nombrefuncionario_rutfuncionario_añomes.pdf
+// 5. Generar el nombre del archivo
 $nombreSinEspacios = str_replace(' ', '', $funcionario['nombre']);
 $mesFormateado = str_pad($mes, 2, '0', STR_PAD_LEFT);
 $nombre_archivo = "{$nombreSinEspacios}_{$rut}_{$anio}{$mesFormateado}.pdf";
@@ -84,11 +122,12 @@ $nombre_archivo = "{$nombreSinEspacios}_{$rut}_{$anio}{$mesFormateado}.pdf";
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        body { background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        /* El contenedor que será convertido a PDF */
+        body { background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
         #reporte-pdf { 
             background-color: white; 
-            width: 800px; 
+            width: 100%; 
+            max-width: 850px; 
+            margin: 0 auto;
             padding: 40px; 
             font-family: Arial, sans-serif; 
             font-size: 12px; 
@@ -97,8 +136,16 @@ $nombre_archivo = "{$nombreSinEspacios}_{$rut}_{$anio}{$mesFormateado}.pdf";
         .cabecera-oficial { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
         .tabla-reporte th { background-color: #f8f9fa !important; font-size: 11px; text-transform: uppercase; border: 1px solid #dee2e6;}
         .tabla-reporte td { padding: 5px 8px; border: 1px solid #dee2e6; }
+        
+        /* Estilo para fila de licencia */
+        .fila-licencia { background-color: #f4f6f9; color: #495057; font-style: italic; }
+        
         .firma-box { margin-top: 50px; text-align: center; }
         .linea-firma { border-top: 1px solid #000; width: 250px; margin: 0 auto; margin-top: 60px; padding-top: 5px; font-weight: bold; }
+        
+        /* Alerta legal */
+        .alerta-legal { border: 1px solid #dc3545; background-color: #f8d7da; color: #721c24; padding: 12px; margin-top: 15px; border-radius: 5px; font-size: 11px; }
+        
         #pantalla-carga { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
     </style>
 </head>
@@ -134,7 +181,7 @@ $nombre_archivo = "{$nombreSinEspacios}_{$rut}_{$anio}{$mesFormateado}.pdf";
         </div>
     </div>
 
-    <table class="table table-sm tabla-reporte w-100 text-center">
+    <table class="table table-sm tabla-reporte w-100 text-center mb-0">
         <thead>
             <tr>
                 <th>Día</th>
@@ -151,11 +198,16 @@ $nombre_archivo = "{$nombreSinEspacios}_{$rut}_{$anio}{$mesFormateado}.pdf";
             for ($i = 1; $i <= $diasDelMes; $i++) {
                 if (isset($datosMes[$i])) {
                     $d = $datosMes[$i];
-                    echo "<tr>
+                    
+                    // Identificamos si es licencia para pintarla distinto
+                    $es_licencia = (isset($d['estado']) && in_array($d['estado'], ['licencia', 'vacaciones'])) || (isset($d['estado_especial']) && in_array($d['estado_especial'], ['licencia', 'vacaciones']));
+                    $clase_fila = $es_licencia ? "fila-licencia" : "";
+
+                    echo "<tr class='$clase_fila'>
                             <td class='fw-bold'>$i</td>
                             <td>{$d['entrada']}</td>
                             <td>{$d['salida']}</td>
-                            <td>{$d['trabajado']}</td>
+                            <td class='fw-bold'>{$d['trabajado']}</td>
                             <td>" . ($d['extra'] !== '00:00' ? "+{$d['extra']}" : "-") . "</td>
                             <td>{$d['tipo_extra']}</td>
                           </tr>";
@@ -170,10 +222,18 @@ $nombre_archivo = "{$nombreSinEspacios}_{$rut}_{$anio}{$mesFormateado}.pdf";
         </tbody>
     </table>
 
+    <?php if ($excede_limite_legal): ?>
+    <div class="alerta-legal">
+        <strong>⚠️ ADVERTENCIA LEGAL POR SOBRETIEMPO:</strong> El total de horas extraordinarias de este funcionario supera el límite máximo permitido mensual (40 horas).<br>
+        <em>* Estatuto Administrativo (Ley N° 18.883), Art. 63: "Los trabajos extraordinarios no podrán exceder de 40 horas mensuales".</em><br>
+        <em>* Código del Trabajo, Art. 31: "Podrá pactarse horas extraordinarias hasta un máximo de 2 horas por día" (Límite proporcional).</em>
+    </div>
+    <?php endif; ?>
+
     <table class="table table-sm tabla-reporte w-100 mt-4">
         <tbody>
             <tr>
-                <td class="text-end fw-bold w-75">TOTAL HORAS ORDINARIAS:</td>
+                <td class="text-end fw-bold w-75">TOTAL HORAS ORDINARIAS (Incluye licencias):</td>
                 <td class="fw-bold fs-6 text-center w-25"><?php echo formatoHoras($minutos_ordinarios); ?> hrs</td>
             </tr>
             <tr>
@@ -207,23 +267,20 @@ $nombre_archivo = "{$nombreSinEspacios}_{$rut}_{$anio}{$mesFormateado}.pdf";
     window.onload = function() {
         const elemento = document.getElementById('reporte-pdf');
         
-        // Configuramos cómo queremos el PDF
         const opciones = {
-            margin:       10,
+            margin:       [15, 10, 15, 10], 
             filename:     '<?php echo $nombre_archivo; ?>',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'legal', orientation: 'portrait' } 
         };
 
-        // Magia: Convertir a PDF y descargar
         html2pdf().set(opciones).from(elemento).save().then(function() {
-            // Cuando termine de descargar, mostramos un mensaje y cerramos la pestaña
             document.getElementById('pantalla-carga').innerHTML = `
                 <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
                 <h3 class="mt-3 text-dark fw-bold">¡Descarga Completada!</h3>
-                <p class="text-muted">El archivo <b><?php echo $nombre_archivo; ?></b> se ha guardado en tus Descargas.</p>
-                <button class="btn btn-outline-secondary mt-3" onclick="window.close()">Cerrar esta pestaña</button>
+                <p class="text-muted">El archivo <b><?php echo $nombre_archivo; ?></b> se guardó en tus Descargas.</p>
+                <button class="btn btn-outline-secondary mt-3" onclick="window.close()">Cerrar Pestaña</button>
             `;
         });
     };
