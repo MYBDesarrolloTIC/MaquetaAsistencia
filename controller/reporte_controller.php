@@ -98,7 +98,7 @@ unset($info); // Romper referencia
 
 // VALIDACIÓN LEGAL DE HORAS EXTRAS (Máximo 40 horas al mes)
 $total_minutos_extras = $minutos_extra_diurnas + $minutos_extra_nocturnas;
-$excede_limite_legal = $total_minutos_extras > (40 * 60);
+$excede_limite_legal = true;
 
 // Función para formatear minutos a "HH:MM hrs"
 function formatoHoras($minutos_totales) {
@@ -224,9 +224,8 @@ $nombre_archivo = "{$nombreSinEspacios}_{$rut}_{$anio}{$mesFormateado}.pdf";
 
     <?php if ($excede_limite_legal): ?>
     <div class="alerta-legal">
-        <strong>⚠️ ADVERTENCIA LEGAL POR SOBRETIEMPO:</strong> El total de horas extraordinarias de este funcionario supera el límite máximo permitido mensual (40 horas).<br>
-        <em>* Estatuto Administrativo (Ley N° 18.883), Art. 63: "Los trabajos extraordinarios no podrán exceder de 40 horas mensuales".</em><br>
-        <em>* Código del Trabajo, Art. 31: "Podrá pactarse horas extraordinarias hasta un máximo de 2 horas por día" (Límite proporcional).</em>
+            <strong>⚠️ ADVERTENCIA LEGAL POR SOBRETIEMPO:</strong> El total de horas extraordinarias de este funcionario supera el límite máximo permitido mensual (40 horas).<br>
+        <em>* Reajusta remuneraciones de los trabajadores del sector público y dicta otras normas de carácter pecuniario (Ley N° 19.104), Art. 9: "El máximo de horas extraordinarias diurnas cuyo pago podrá autorizarse, será de 40 horas por funcionario al mes.".</em><br>
     </div>
     <?php endif; ?>
 

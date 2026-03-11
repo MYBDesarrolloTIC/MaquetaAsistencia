@@ -47,14 +47,9 @@ try {
         }
         
         $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM funcionarios WHERE rut = ?");
-<<<<<<< HEAD
+
         $stmtAutoEnrolar = $pdo->prepare("INSERT INTO funcionarios (rut, codigo_tarjeta, nombre, apellidoP) VALUES (?, ?, 'FUNCIONARIO', 'POR ENROLAR')");
-=======
-        
-        // MODIFICACIÓN: Insertamos RUT, CODIGO, NOMBRE, y le asignamos Sección 1 y Turno 1 obligatoriamente para evitar errores SQL
-        $stmtAutoEnrolar = $pdo->prepare("INSERT INTO funcionarios (rut, codigo_tarjeta, nombre, apellidoP, IDseccion, IDturno) VALUES (?, ?, 'FUNCIONARIO', 'POR ENROLAR', 1, 1)");
-        
->>>>>>> deafd4cbff053c65040bbb91d86802b63f5c7d42
+
         $stmtInsert = $pdo->prepare("INSERT INTO asistencia (rut_funcionario, fecha, hora, tipo_marca) VALUES (?, ?, ?, ?)");
         
         $creados = 0;
@@ -64,12 +59,12 @@ try {
             $stmtCheck->execute([$rut]);
             if ($stmtCheck->fetchColumn() == 0) {
                 
-<<<<<<< HEAD
+
                 $sufijoAleatorio = rand(10000, 99999);
                 
                 $codigoGenerado = $rut . $sufijoAleatorio;
 
-=======
+
                 // 1. El RUT ya viene limpio del CSV (ej: 140217077)
                 // 2. Generamos exactamente 5 números aleatorios (entre 10000 y 99999)
                 $sufijoAleatorio = rand(10000, 99999);
@@ -77,8 +72,7 @@ try {
                 // 3. Unimos el RUT completo con el sufijo (Igual que hace tu JS)
                 $codigoGenerado = $rut . $sufijoAleatorio;
 
-                // Ejecutamos el insert del nuevo funcionario "fantasma" con su código de tarjeta funcional
->>>>>>> deafd4cbff053c65040bbb91d86802b63f5c7d42
+
                 $stmtAutoEnrolar->execute([$rut, $codigoGenerado]);
                 $nuevos++;
             }

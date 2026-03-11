@@ -32,17 +32,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form id="formSeccion">
+                <form id="formSeccion" onsubmit="event.preventDefault(); guardarSeccion();">
                     <input type="hidden" id="seccion_id" value="">
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">Nombre de la Sección</label>
-                        <input type="text" class="form-control" id="seccion_nombre" placeholder="Ej. DIDECO, Tránsito, Salud..." required autocomplete="off" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); guardarSeccion(); }">
+                        <input type="text" class="form-control" id="seccion_nombre" placeholder="Ej. DIDECO, Tránsito, Salud..." required autocomplete="off">
                     </div>
+                    <button type="submit" class="d-none"></button>
                 </form>
             </div>
             <div class="modal-footer border-top-0 pt-0 bg-light p-4">
                 <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn text-white fw-bold px-4" style="background-color: var(--yb-blue);" onclick="guardarSeccion()">
+                <button type="submit" form="formSeccion" class="btn text-white fw-bold px-4" style="background-color: var(--yb-blue);">
                     <i class="bi bi-check-circle me-1"></i> Guardar
                 </button>
             </div>
@@ -74,18 +75,21 @@
                     <p class="text-danger-yb small fw-bold mt-2">Esta acción es irreversible y afectará a los registros vinculados.</p>
                 </div>
 
-                <div class="bg-light p-3 rounded border">
-                    <label class="form-label fw-bold small text-muted text-uppercase">Contraseña de Autorización</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white"><i class="bi bi-key-fill text-muted"></i></span>
-                        <input type="password" id="password-admin-borrado" class="form-control" placeholder="Ingrese la contraseña maestra" autocomplete="new-password" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); ejecutarBorradoSeguro(); }">
+                <form id="formBorrado" onsubmit="event.preventDefault(); ejecutarBorradoSeguro();">
+                    <div class="bg-light p-3 rounded border">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Contraseña de Autorización</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-key-fill text-muted"></i></span>
+                            <input type="password" id="password-admin-borrado" class="form-control" placeholder="Ingrese la contraseña maestra" autocomplete="new-password" required>
+                        </div>
                     </div>
-                </div>
+                    <button type="submit" class="d-none"></button>
+                </form>
 
             </div>
             <div class="modal-footer border-0 bg-light justify-content-between">
                 <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger fw-bold shadow-sm" style="background-color: var(--yb-red); border-color: var(--yb-red);" onclick="ejecutarBorradoSeguro()" id="btn-confirmar-borrado-seguro">
+                <button type="submit" form="formBorrado" class="btn btn-danger fw-bold shadow-sm" style="background-color: var(--yb-red); border-color: var(--yb-red);" id="btn-confirmar-borrado-seguro">
                     <i class="bi bi-trash-fill me-2"></i>Confirmar Eliminación
                 </button>
             </div>

@@ -141,14 +141,13 @@ class Asistencia {
                             $diaSemana = (int)date('N', $i);
                             $minutosLicencia = ($diaSemana >= 1 && $diaSemana <= 5) ? 480 : 0;
 
-                            // TU CÓDIGO ORIGINAL, SOLO LE AGREGAMOS LOS MINUTOS AL FINAL
                             $dias[$diaLicencia] = [
                                 'entrada' => null, 
                                 'salida' => null, 
                                 'foto_entrada' => null, 
                                 'foto_salida' => null, 
                                 'estado_especial' => $estadoPintar,
-                                'minutos_totales' => $minutosLicencia // <--- AQUÍ SE ASIGNAN LAS 8 HORAS
+                                'minutos_totales' => $minutosLicencia
                             ];
                         }
                     }
@@ -190,8 +189,7 @@ class Asistencia {
 
                     $segundos_trabajados = $t_sal - $t_ent;
                     
-                    // 1. NUEVO: DESCUENTO AUTOMÁTICO DE COLACIÓN (1 HORA)
-                    // Si el trabajador estuvo más de 5 horas continuas, le descontamos 1 hora (3600 segundos)
+                    // 1. DESCUENTO AUTOMÁTICO DE COLACIÓN (1 HORA)
                     if ($segundos_trabajados >= (5 * 3600)) {
                         $segundos_trabajados -= 3600;
                     }
@@ -203,25 +201,15 @@ class Asistencia {
                     $m_trab = floor(($segundos_trabajados % 3600) / 60);
                     $hrs_trabajadas = str_pad($h_trab, 2, '0', STR_PAD_LEFT) . ':' . str_pad($m_trab, 2, '0', STR_PAD_LEFT);
 
-                    // 2. NUEVO: LÓGICA DE TURNOS LIBRES Y HORAS EXTRAS
-                    // Si el turno es 00:00 a 00:00 (Turno genérico/libre), NO hay horas extras ni atrasos
+                    // 2. LÓGICA DE TURNOS LIBRES Y HORAS EXTRAS
                     if ($segundos_requeridos == 0) {
                         $estado = 'verde'; 
-<<<<<<< HEAD
-                        // $hrs_extra se mantiene en '00:00' por defecto
                     } else {
-                        // Turno normal (Ej: 08:00 a 17:00): Calculamos horas extras si corresponde
-=======
-                    } else {
->>>>>>> deafd4cbff053c65040bbb91d86802b63f5c7d42
                         if ($segundos_trabajados >= $segundos_requeridos) {
                             $estado = 'verde'; 
                             $segundos_extra = $segundos_trabajados - $segundos_requeridos;
                             
-<<<<<<< HEAD
                             // Solo se consideran horas extras si pasan de 1 minuto
-=======
->>>>>>> deafd4cbff053c65040bbb91d86802b63f5c7d42
                             if ($segundos_extra > 60) {
                                 $h_ext = floor($segundos_extra / 3600);
                                 $m_ext = floor(($segundos_extra % 3600) / 60);
@@ -231,11 +219,7 @@ class Asistencia {
                                 $tipo_extra = ($hora_salida_real >= 21 || $hora_salida_real <= 7) ? 'Nocturna' : 'Diurna';
                             }
                         } else {
-<<<<<<< HEAD
                             $estado = 'amarillo'; // Atraso o salida anticipada
-=======
-                            $estado = 'amarillo';
->>>>>>> deafd4cbff053c65040bbb91d86802b63f5c7d42
                         }
                     }
                 }

@@ -1620,6 +1620,9 @@ async function prepararModalSeguroBorrado(tipo, id, nombre) {
 /* =========================================================================
    MÓDULO 11: VISUALIZADOR Y DESCARGA DE CREDENCIALES
    ========================================================================= */
+/* =========================================================================
+   MÓDULO 11: VISUALIZADOR Y DESCARGA DE CREDENCIALES
+   ========================================================================= */
 function verCredencial(rut, codigo, nombre, apellido) {
     document.getElementById('credencial-nombre').innerText = `${nombre} ${apellido}`;
     document.getElementById('credencial-rut').innerText = `RUT: ${formatearRUT(rut)}`;
@@ -1634,15 +1637,13 @@ function verCredencial(rut, codigo, nombre, apellido) {
     let codigoFinal = codigo;
 
     // MAGIA DE RE-ENROLAMIENTO: 
-    // Si el código viene nulo, vacío o "undefined" desde la base de datos...
     if (!codigoFinal || codigoFinal === 'null' || codigoFinal === 'undefined' || codigoFinal.trim() === '') {
-        // Tomamos el RUT (sin puntos ni guiones), le quitamos el último número (el dígito verificador)
+        // Tomamos el RUT limpio
         let rutLimpio = rut.replace(/[^0-9kK]/gi, '');
         if (rutLimpio.length > 2) {
-            let rutBase = rutLimpio.slice(0, -1);
-            // Generamos un sufijo aleatorio de 5 dígitos (igual que en Enrolar)
+            // SOLUCIÓN: Usamos el RUT completo (sin quitarle números) y le sumamos los 5 dígitos
             let sufijoAleatorio = Math.floor(10000 + Math.random() * 90000);
-            codigoFinal = rutBase + sufijoAleatorio;
+            codigoFinal = rutLimpio + sufijoAleatorio;
         } else {
             codigoFinal = null;
         }
@@ -1674,6 +1675,7 @@ function verCredencial(rut, codigo, nombre, apellido) {
 
     const modal = new bootstrap.Modal(document.getElementById('modalVerCredencial'));
     modal.show();
+
 }
 
 function descargarCredencialModal() {
