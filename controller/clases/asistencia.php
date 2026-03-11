@@ -81,8 +81,8 @@ class Asistencia {
             $stmtT->execute();
             $turno = $stmtT->fetch(PDO::FETCH_ASSOC);
             
-            $turno_ent = ($turno && $turno['hora_entrada']) ? $turno['hora_entrada'] : '08:00:00';
-            $turno_sal = ($turno && $turno['hora_salida']) ? $turno['hora_salida'] : '17:00:00';
+            $turno_ent = ($turno && $turno['hora_entrada']) ? $turno['hora_entrada'] : '00:00:00';
+            $turno_sal = ($turno && $turno['hora_salida']) ? $turno['hora_salida'] : '00:00:00';
 
             // A. Rescatamos Asistencia
             $sqlMarcas = "SELECT fecha, hora, tipo_marca, foto_seguridad 
@@ -184,25 +184,44 @@ class Asistencia {
                     $t_sal = strtotime($salida);
                     $req_ent = strtotime($turno_ent);
                     $req_sal = strtotime($turno_sal);
+                    
                     if ($req_sal < $req_ent) $req_sal += 86400; 
                     if ($t_sal < $t_ent) $t_sal += 86400;
 
                     $segundos_trabajados = $t_sal - $t_ent;
+                    
+                    // 1. NUEVO: DESCUENTO AUTOMÁTICO DE COLACIÓN (1 HORA)
+                    // Si el trabajador estuvo más de 5 horas continuas, le descontamos 1 hora (3600 segundos)
+                    if ($segundos_trabajados >= (5 * 3600)) {
+                        $segundos_trabajados -= 3600;
+                    }
+
                     $segundos_requeridos = $req_sal - $req_ent;
+                    
                     $minutos_totales = floor($segundos_trabajados / 60);
                     $h_trab = floor($segundos_trabajados / 3600);
                     $m_trab = floor(($segundos_trabajados % 3600) / 60);
                     $hrs_trabajadas = str_pad($h_trab, 2, '0', STR_PAD_LEFT) . ':' . str_pad($m_trab, 2, '0', STR_PAD_LEFT);
 
-                    if ($segundos_trabajados >= $segundos_requeridos) {
+                    // 2. NUEVO: LÓGICA DE TURNOS LIBRES Y HORAS EXTRAS
+                    // Si el turno es 00:00 a 00:00 (Turno genérico/libre), NO hay horas extras ni atrasos
+                    if ($segundos_requeridos == 0) {
                         $estado = 'verde'; 
-                        $segundos_extra = $segundos_trabajados - $segundos_requeridos;
-                        if ($segundos_extra > 60) {
-                            $h_ext = floor($segundos_extra / 3600);
-                            $m_ext = floor(($segundos_extra % 3600) / 60);
-                            $hrs_extra = str_pad($h_ext, 2, '0', STR_PAD_LEFT) . ':' . str_pad($m_ext, 2, '0', STR_PAD_LEFT);
-                            $hora_salida_real = (int)date('H', $t_sal);
-                            $tipo_extra = ($hora_salida_real >= 21 || $hora_salida_real <= 7) ? 'Nocturna' : 'Diurna';
+                    } else {
+                        if ($segundos_trabajados >= $segundos_requeridos) {
+                            $estado = 'verde'; 
+                            $segundos_extra = $segundos_trabajados - $segundos_requeridos;
+                            
+                            if ($segundos_extra > 60) {
+                                $h_ext = floor($segundos_extra / 3600);
+                                $m_ext = floor(($segundos_extra % 3600) / 60);
+                                $hrs_extra = str_pad($h_ext, 2, '0', STR_PAD_LEFT) . ':' . str_pad($m_ext, 2, '0', STR_PAD_LEFT);
+                                
+                                $hora_salida_real = (int)date('H', $t_sal);
+                                $tipo_extra = ($hora_salida_real >= 21 || $hora_salida_real <= 7) ? 'Nocturna' : 'Diurna';
+                            }
+                        } else {
+                            $estado = 'amarillo';
                         }
                     }
                 }

@@ -47,8 +47,10 @@ try {
         }
         
         $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM funcionarios WHERE rut = ?");
-        // MODIFICACIÓN: Ahora insertamos el RUT y el CODIGO_TARJETA generados por PHP
-        $stmtAutoEnrolar = $pdo->prepare("INSERT INTO funcionarios (rut, codigo_tarjeta, nombre, apellidoP) VALUES (?, ?, 'Por enrolar', 'Por enrolar')");
+        
+        // MODIFICACIÓN: Insertamos RUT, CODIGO, NOMBRE, y le asignamos Sección 1 y Turno 1 obligatoriamente para evitar errores SQL
+        $stmtAutoEnrolar = $pdo->prepare("INSERT INTO funcionarios (rut, codigo_tarjeta, nombre, apellidoP, IDseccion, IDturno) VALUES (?, ?, 'FUNCIONARIO', 'POR ENROLAR', 1, 1)");
+        
         $stmtInsert = $pdo->prepare("INSERT INTO asistencia (rut_funcionario, fecha, hora, tipo_marca) VALUES (?, ?, ?, ?)");
         
         $creados = 0;
@@ -57,15 +59,15 @@ try {
         foreach ($agrupacion as $rut => $fechas) {
             $stmtCheck->execute([$rut]);
             if ($stmtCheck->fetchColumn() == 0) {
-                // LÓGICA DE AUTO-GENERACIÓN DE CÓDIGO (Igual que en el frontend JS)
-                // 1. Tomamos el RUT (sin puntos ni guion) pero sin el dígito verificador (le quitamos el último caracter)
-                $rutBase = substr($rut, 0, -1); 
-                // 2. Generamos 5 números aleatorios (entre 10000 y 99999)
+                
+                // 1. El RUT ya viene limpio del CSV (ej: 140217077)
+                // 2. Generamos exactamente 5 números aleatorios (entre 10000 y 99999)
                 $sufijoAleatorio = rand(10000, 99999);
-                // 3. Los unimos
-                $codigoGenerado = $rutBase . $sufijoAleatorio;
+                
+                // 3. Unimos el RUT completo con el sufijo (Igual que hace tu JS)
+                $codigoGenerado = $rut . $sufijoAleatorio;
 
-                // Ejecutamos el insert con el nuevo código
+                // Ejecutamos el insert del nuevo funcionario "fantasma" con su código de tarjeta funcional
                 $stmtAutoEnrolar->execute([$rut, $codigoGenerado]);
                 $nuevos++;
             }
