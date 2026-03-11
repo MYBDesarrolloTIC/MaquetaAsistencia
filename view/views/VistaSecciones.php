@@ -36,7 +36,7 @@
                     <input type="hidden" id="seccion_id" value="">
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">Nombre de la Sección</label>
-                        <input type="text" class="form-control" id="seccion_nombre" placeholder="Ej. DIDECO, Tránsito, Salud..." required autocomplete="off">
+                        <input type="text" class="form-control" id="seccion_nombre" placeholder="Ej. DIDECO, Tránsito, Salud..." required autocomplete="off" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); guardarSeccion(); }">
                     </div>
                 </form>
             </div>
@@ -78,7 +78,7 @@
                     <label class="form-label fw-bold small text-muted text-uppercase">Contraseña de Autorización</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white"><i class="bi bi-key-fill text-muted"></i></span>
-                        <input type="password" id="password-admin-borrado" class="form-control" placeholder="Ingrese la contraseña maestra" autocomplete="new-password">
+                        <input type="password" id="password-admin-borrado" class="form-control" placeholder="Ingrese la contraseña maestra" autocomplete="new-password" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); ejecutarBorradoSeguro(); }">
                     </div>
                 </div>
 

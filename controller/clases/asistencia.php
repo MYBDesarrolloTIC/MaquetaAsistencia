@@ -207,11 +207,21 @@ class Asistencia {
                     // Si el turno es 00:00 a 00:00 (Turno genérico/libre), NO hay horas extras ni atrasos
                     if ($segundos_requeridos == 0) {
                         $estado = 'verde'; 
+<<<<<<< HEAD
+                        // $hrs_extra se mantiene en '00:00' por defecto
                     } else {
+                        // Turno normal (Ej: 08:00 a 17:00): Calculamos horas extras si corresponde
+=======
+                    } else {
+>>>>>>> deafd4cbff053c65040bbb91d86802b63f5c7d42
                         if ($segundos_trabajados >= $segundos_requeridos) {
                             $estado = 'verde'; 
                             $segundos_extra = $segundos_trabajados - $segundos_requeridos;
                             
+<<<<<<< HEAD
+                            // Solo se consideran horas extras si pasan de 1 minuto
+=======
+>>>>>>> deafd4cbff053c65040bbb91d86802b63f5c7d42
                             if ($segundos_extra > 60) {
                                 $h_ext = floor($segundos_extra / 3600);
                                 $m_ext = floor(($segundos_extra % 3600) / 60);
@@ -221,11 +231,15 @@ class Asistencia {
                                 $tipo_extra = ($hora_salida_real >= 21 || $hora_salida_real <= 7) ? 'Nocturna' : 'Diurna';
                             }
                         } else {
+<<<<<<< HEAD
+                            $estado = 'amarillo'; // Atraso o salida anticipada
+=======
                             $estado = 'amarillo';
+>>>>>>> deafd4cbff053c65040bbb91d86802b63f5c7d42
                         }
                     }
                 }
-
+                
                 $calendario[$dia] = [
                     'entrada' => $entrada ? substr($entrada, 0, 5) : '--:--',
                     'salida' => $salida ? substr($salida, 0, 5) : '--:--',

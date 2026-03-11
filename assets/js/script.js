@@ -278,6 +278,10 @@ function abrirModalTurno() {
         alerta.innerHTML = '<i class="bi bi-info-circle-fill me-2 fs-5"></i><span>Complete las horas.</span>';
         alerta.className = "alert alert-info py-2 small d-flex align-items-center mb-0";
     }
+    
+    // Autofocus en el nombre apenas abre la ventana
+    modalEl.addEventListener('shown.bs.modal', () => { document.getElementById('turno_nombre').focus(); }, { once: true });
+
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
 }
@@ -290,9 +294,9 @@ function editarTurno(id, nombre, entrada, salida) {
     document.getElementById('tituloModalTurno').innerHTML = '<i class="bi bi-pencil-square me-2"></i> Editar Turno';
     calcularTiempoJornadaFormulario();
     
-    // Llamado infalible del modal (evita el error si la variable global falla)
     const modalEl = document.getElementById('modalFormTurno');
     if (modalEl) {
+        modalEl.addEventListener('shown.bs.modal', () => { document.getElementById('turno_nombre').focus(); }, { once: true });
         const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
         modal.show();
     }
@@ -550,11 +554,15 @@ async function cargarListaFuncionarios() {
                         <div class="col-12 col-lg-3 mb-2 mb-lg-0 text-black fw-bold text-truncate">${iconoAlerta}${f.nombre} ${f.apellidoP}</div>
                         <div class="col-6 col-lg-3 text-truncate text-muted d-none d-md-block">${textoSeccion}</div>
                         <div class="col-6 col-lg-2 d-none d-md-block"><span class="badge bg-light text-dark border px-2 py-1"><i class="bi bi-clock me-1"></i>${textoTurno}</span></div>
-                        <div class="col-12 col-lg-2 text-end mt-3 mt-lg-0 pe-lg-3">
-                            <button class="btn btn-sm btn-outline-primary shadow-sm py-1 px-2 me-2 fw-bold" title="Editar" onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'editar', event)">
-                                <i class="bi bi-pencil-square"></i> Editar
+                        
+                        <div class="col-12 col-lg-2 text-end mt-3 mt-lg-0 pe-lg-3 text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-dark shadow-sm py-1 px-2 me-1" title="Ver Credencial" onclick="event.stopPropagation(); verCredencial('${f.rut}', '${f.codigo_tarjeta}', '${f.nombre}', '${f.apellidoP}')">
+                                <i class="bi bi-upc-scan"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger shadow-sm py-1 px-2" title="Eliminar" onclick="event.stopPropagation(); confirmarBorradoFuncionario('${f.rut}')">
+                            <button type="button" class="btn btn-sm btn-outline-primary shadow-sm py-1 px-2 me-1 fw-bold" title="Editar" onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'editar', event)">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger shadow-sm py-1 px-2" title="Eliminar" onclick="event.stopPropagation(); confirmarBorradoFuncionario('${f.rut}')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -920,6 +928,48 @@ function confirmarBorradoFuncionario(rut) {
     const modal = new bootstrap.Modal(document.getElementById('modalBorrar'));
     modal.show();
 }
+async function ejecutarBorrado() {
+    const btnConfirmar = document.getElementById('btn-confirmar-borrado-func') || document.querySelector('#modalBorrar .btn-danger');
+    
+    if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...';
+    }
+
+    if (typeof funcionarioAborrarId !== 'undefined' && funcionarioAborrarId !== null) {
+        try {
+            const res = await apiFuncionarios.deleteFuncionario(funcionarioAborrarId);
+            
+            if (res.status === 1) { 
+                mostrarNotificacion("Funcionario eliminado correctamente.", "success"); 
+                cargarListaFuncionarios(); 
+            } else { 
+                mostrarNotificacion("No se pudo eliminar: " + res.message, "error"); 
+            }
+        } catch (error) { 
+            mostrarNotificacion("Error de conexión al eliminar.", "error"); 
+        } finally {
+            funcionarioAborrarId = null;
+            
+            const modalEl = document.getElementById('modalBorrar');
+            if (modalEl) { 
+                const bsModal = bootstrap.Modal.getInstance(modalEl); 
+                if (bsModal) bsModal.hide(); 
+            }
+
+            if (btnConfirmar) {
+                btnConfirmar.disabled = false;
+                btnConfirmar.innerHTML = 'Sí, Eliminar';
+            }
+        }
+    } else {
+        mostrarNotificacion("No se ha seleccionado ningún funcionario.", "warning");
+        if (btnConfirmar) {
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerHTML = 'Sí, Eliminar';
+        }
+    }
+}
 
 function generarReporteMensual(rutFuncionario) {
     const mesActual = fechaActualVisualizacion.getMonth() + 1;
@@ -967,6 +1017,8 @@ async function guardarAusencia() {
         } else { mostrarNotificacion("Error: " + res.message, "error"); }
     } catch (error) { mostrarNotificacion("Error de conexión al registrar.", "error"); }
 }
+
+
 /* =========================================================================
    MÓDULO 5: SECCIONES
    ========================================================================= */
@@ -1012,10 +1064,25 @@ function abrirModalNuevaSeccion() {
     if (!modalEl) return;
     if (document.getElementById('formSeccion')) document.getElementById('formSeccion').reset();
     if (document.getElementById('seccion_id')) document.getElementById('seccion_id').value = '';
+    
+    // Autofocus en el nombre apenas abre la ventana
+    modalEl.addEventListener('shown.bs.modal', () => { document.getElementById('seccion_nombre').focus(); }, { once: true });
+
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
 }
 
+function editarSeccion(id, nombre) {
+    document.getElementById('seccion_id').value = id;
+    document.getElementById('seccion_nombre').value = nombre;
+    
+    const modalEl = document.getElementById('modalFormSeccion');
+    if (modalEl) {
+        modalEl.addEventListener('shown.bs.modal', () => { document.getElementById('seccion_nombre').focus(); }, { once: true });
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
 async function guardarSeccion() {
     const id = document.getElementById('seccion_id').value;
     const nombre = document.getElementById('seccion_nombre').value.trim();
@@ -1030,18 +1097,6 @@ async function guardarSeccion() {
         if (modalEl) bootstrap.Modal.getInstance(modalEl).hide();
         cargarListaSecciones();
     } else { mostrarNotificacion("Error: " + res.message, "error"); }
-}
-
-function editarSeccion(id, nombre) {
-    document.getElementById('seccion_id').value = id;
-    document.getElementById('seccion_nombre').value = nombre;
-    
-    // Llamado infalible del modal
-    const modalEl = document.getElementById('modalFormSeccion');
-    if (modalEl) {
-        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        modal.show();
-    }
 }
 
 /* =========================================================================
@@ -1510,12 +1565,11 @@ async function prepararModalSeguroBorrado(tipo, id, nombre) {
         btnConfirmar.disabled = false;
         btnConfirmar.innerHTML = '<i class="bi bi-trash-fill me-2"></i>Confirmar Eliminación';
     }
-}
-async function ejecutarBorradoSeguro() {
-    const passwordInput = document.getElementById('password-admin-borrado').value;
+}async function ejecutarBorradoSeguro() {
+    const passwordInput = document.getElementById('password-admin-borrado').value.trim();
 
     if (!passwordInput) {
-        mostrarNotificacion("Debe ingresar su contraseña de administrador para continuar.", "warning");
+        mostrarNotificacion("Debe ingresar la contraseña maestra.", "warning");
         return;
     }
 
@@ -1524,31 +1578,26 @@ async function ejecutarBorradoSeguro() {
     btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Validando...';
 
     try {
-        const formData = new FormData();
-        formData.append('action', 'validarPassword');
-        formData.append('password', passwordInput);
-
-        const reqValidar = await fetch('../../controller/seguridad_controller.php', { method: 'POST', body: formData });
+        // Obligamos al navegador a conectarse al PHP nuevo usando GET
+        const urlSegura = `../../controller/seguridad_controller.php?action=validarPassword&password=${encodeURIComponent(passwordInput)}`;
+        const reqValidar = await fetch(urlSegura);
         const resValidar = await reqValidar.json();
 
         if (resValidar.status === 1) {
+            // Clave admin1234 correcta, procedemos a borrar
             if (tipoItemABorrar === 'turno' && turnoABorrarId) {
                 const resBorrar = await apiTurnos.deleteTurno(turnoABorrarId);
                 if (resBorrar.status === 1) {
-                    mostrarNotificacion("Turno eliminado correctamente. Los funcionarios han sido desvinculados.", "success");
+                    mostrarNotificacion("Turno eliminado correctamente.", "success");
                     cargarTarjetasTurnos();
-                } else {
-                    mostrarNotificacion(resBorrar.message, "error");
-                }
+                } else { mostrarNotificacion(resBorrar.message, "error"); }
             } 
             else if (tipoItemABorrar === 'seccion' && seccionABorrarId) {
                 const resBorrar = await apiSecciones.deleteSeccion(seccionABorrarId);
                 if (resBorrar.status === 1) {
-                    mostrarNotificacion("Sección eliminada correctamente. Los funcionarios han sido desvinculados.", "success");
+                    mostrarNotificacion("Sección eliminada correctamente.", "success");
                     cargarListaSecciones();
-                } else {
-                    mostrarNotificacion(resBorrar.message, "error");
-                }
+                } else { mostrarNotificacion(resBorrar.message, "error"); }
             }
 
             bootstrap.Modal.getInstance(document.getElementById('modalBorrarSeguro')).hide();
@@ -1556,14 +1605,110 @@ async function ejecutarBorradoSeguro() {
             seccionABorrarId = null;
 
         } else {
-            mostrarNotificacion("Contraseña incorrecta. Operación denegada.", "error");
+            // Si te equivocas de clave, mostrará "La clave ingresada no es la maestra."
+            mostrarNotificacion(resValidar.message, "error");
             document.getElementById('password-admin-borrado').value = '';
             document.getElementById('password-admin-borrado').focus();
         }
     } catch (error) {
-        mostrarNotificacion("Error de conexión al validar la seguridad.", "error");
+        mostrarNotificacion("Error de conexión al validar la contraseña.", "error");
     } finally {
         btnConfirmar.disabled = false;
         btnConfirmar.innerHTML = '<i class="bi bi-trash-fill me-2"></i>Confirmar Eliminación';
     }
+}
+/* =========================================================================
+   MÓDULO 11: VISUALIZADOR Y DESCARGA DE CREDENCIALES
+   ========================================================================= */
+function verCredencial(rut, codigo, nombre, apellido) {
+    document.getElementById('credencial-nombre').innerText = `${nombre} ${apellido}`;
+    document.getElementById('credencial-rut').innerText = `RUT: ${formatearRUT(rut)}`;
+    
+    const svgBarcode = document.getElementById('barcode-credencial');
+    const msjError = document.getElementById('credencial-error');
+    const btnDescargar = document.getElementById('btn-descargar-modal');
+
+    // Limpiamos el SVG por si tenía uno anterior
+    svgBarcode.innerHTML = '';
+    
+    let codigoFinal = codigo;
+
+    // MAGIA DE RE-ENROLAMIENTO: 
+    // Si el código viene nulo, vacío o "undefined" desde la base de datos...
+    if (!codigoFinal || codigoFinal === 'null' || codigoFinal === 'undefined' || codigoFinal.trim() === '') {
+        // Tomamos el RUT (sin puntos ni guiones), le quitamos el último número (el dígito verificador)
+        let rutLimpio = rut.replace(/[^0-9kK]/gi, '');
+        if (rutLimpio.length > 2) {
+            let rutBase = rutLimpio.slice(0, -1);
+            // Generamos un sufijo aleatorio de 5 dígitos (igual que en Enrolar)
+            let sufijoAleatorio = Math.floor(10000 + Math.random() * 90000);
+            codigoFinal = rutBase + sufijoAleatorio;
+        } else {
+            codigoFinal = null;
+        }
+    }
+
+    // Dibujamos el código
+    if (codigoFinal && codigoFinal.length > 2) {
+        document.getElementById('credencial-codigo-texto').innerText = codigoFinal;
+        svgBarcode.style.display = 'block';
+        msjError.classList.add('d-none');
+        btnDescargar.disabled = false;
+
+        if (typeof JsBarcode !== 'undefined') {
+            JsBarcode("#barcode-credencial", codigoFinal, {
+                format: "CODE128",
+                lineColor: "#212529",
+                width: 2,
+                height: 70,
+                displayValue: true,
+                margin: 10
+            });
+        }
+    } else {
+        document.getElementById('credencial-codigo-texto').innerText = 'Error al generar';
+        svgBarcode.style.display = 'none';
+        msjError.classList.remove('d-none');
+        btnDescargar.disabled = true;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('modalVerCredencial'));
+    modal.show();
+}
+
+function descargarCredencialModal() {
+    const svgElement = document.getElementById("barcode-credencial");
+    const rutTexto = document.getElementById('credencial-rut').innerText;
+    // Extraemos solo los números del RUT para el nombre del archivo
+    const rutLimpio = rutTexto.replace(/[^0-9kK]/gi, '');
+    const nombreArchivo = `credencial_${rutLimpio}.png`;
+
+    const canvas = document.createElement("canvas");
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const img = new Image();
+    
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+    
+    img.onload = function() {
+        canvas.width = img.width + 40;
+        canvas.height = img.height + 40;
+        const ctx = canvas.getContext("2d");
+        
+        // Fondo blanco
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Dibujamos el código
+        ctx.drawImage(img, 20, 20);
+        
+        // Forzamos la descarga
+        const pngUrl = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.href = pngUrl;
+        downloadLink.download = nombreArchivo;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        mostrarNotificacion("Credencial descargada correctamente.", "success");
+    };
 }

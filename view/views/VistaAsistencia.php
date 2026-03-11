@@ -60,7 +60,7 @@
             </div>
             <div class="modal-footer border-0 bg-light justify-content-center">
                 <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger fw-bold px-4" style="background-color: var(--yb-red); border-color: var(--yb-red);" onclick="ejecutarBorrado()">Sí, Eliminar</button>
+                <button type="button" id="btn-confirmar-borrado-func" class="btn btn-danger fw-bold px-4" style="background-color: var(--yb-red); border-color: var(--yb-red);" onclick="ejecutarBorrado()">Sí, Eliminar</button>
             </div>
         </div>
     </div>
@@ -127,17 +127,14 @@
                 </div>
 
                 <div id="detalle_caja_fotos" class="row justify-content-center text-center mb-4 d-none">
-                    
                     <div class="col-6 d-none" id="col_foto_entrada">
                         <small class="fw-bold text-muted d-block mb-2 text-uppercase">Entrada</small>
                         <img id="detalle_img_entrada" src="" class="rounded-circle shadow-sm border border-3 border-success bg-white" style="width: 180px; height: 180px; object-fit: cover;">
                     </div>
-                    
                     <div class="col-6 d-none" id="col_foto_salida">
                         <small class="fw-bold text-muted d-block mb-2 text-uppercase">Salida</small>
                         <img id="detalle_img_salida" src="" class="rounded-circle shadow-sm border border-3 border-primary bg-white" style="width: 180px; height: 180px; object-fit: cover;">
                     </div>
-
                 </div>
 
                 <ul class="list-group list-group-flush text-start">
@@ -162,5 +159,38 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalVerCredencial" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-light rounded-top-4 pb-2">
+                <h5 class="modal-title text-black fw-bold"><i class="bi bi-person-badge me-2 text-danger-yb"></i>Credencial</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center d-flex flex-column align-items-center justify-content-center">
+                
+                <h5 class="fw-bold mb-0 text-dark" id="credencial-nombre">Nombre Funcionario</h5>
+                <p class="text-muted small mb-3" id="credencial-rut">RUT: 12.345.678-9</p>
+
+                <div class="generator-zone p-3 bg-white border rounded-3 shadow-sm w-100 mb-3 d-flex flex-column align-items-center justify-content-center">
+                    <svg id="barcode-credencial"></svg>
+                    <div id="credencial-error" class="text-danger small fw-bold d-none">
+                        <i class="bi bi-exclamation-circle me-1"></i> Este usuario no tiene código asignado.
+                    </div>
+                </div>
+
+                <p class="text-muted small mb-0" style="font-size: 0.75rem;">Código interno: <span class="fw-bold" id="credencial-codigo-texto"></span></p>
+
+            </div>
+            <div class="modal-footer border-0 bg-light p-3 justify-content-center rounded-bottom-4">
+                <button type="button" id="btn-descargar-modal" class="btn btn-success fw-bold w-100 shadow-sm" onclick="descargarCredencialModal()">
+                    <i class="bi bi-download me-2"></i> Descargar PNG
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
 <?php include '../includes/footer.php'; ?>

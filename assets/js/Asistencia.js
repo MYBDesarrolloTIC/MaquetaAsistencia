@@ -1,21 +1,26 @@
+
 /* =========================================================================
-   MÓDULO 4: FUNCIONARIOS Y ASISTENCIA (CALENDARIO Y POPUP SEGURO)
+   MÓDULO 4: FUNCIONARIOS, CALENDARIO Y POPUP SEGURO
    ========================================================================= */
-
-// Objeto global seguro para guardar los datos y fotos sin romper el HTML
-window.calendarioData = window.calendarioData || {};
-
 async function cargarListaFuncionarios() {
-    const contenedor = document.getElementById('contenedor-funcionarios');
-    if (!contenedor) return;
+    const contenedorActivos = document.getElementById('contenedor-funcionarios');
+    const contenedorPendientes = document.getElementById('contenedor-no-enrolados');
+    
+    if (!contenedorActivos) return;
 
     try {
         const res = await apiFuncionarios.getFuncionarios();
         const resSecciones = await apiSecciones.getSecciones();
         const resTurnos = await apiTurnos.getTurnos();
-        contenedor.innerHTML = '';
+        
+        contenedorActivos.innerHTML = '';
+        if (contenedorPendientes) contenedorPendientes.innerHTML = '';
 
         if (res.status === 1 && res.data && res.data.length > 0) {
+            
+            let htmlActivos = '';
+            let htmlPendientes = '';
+
             res.data.forEach(f => {
                 const safeId = f.rut.replace(/[^a-zA-Z0-9]/g, '');
                 const colId = `edit-func-${safeId}`;
@@ -38,25 +43,35 @@ async function cargarListaFuncionarios() {
                     });
                 }
 
-                contenedor.innerHTML += `
-                <div class="list-group-item p-0 funcionario-item border-start-danger shadow-sm mb-2 rounded">
-                    <div class="row m-0 align-items-center py-3 px-3 bg-white fila-visible cursor-pointer" onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'calendario', event)">
+                const esPendiente = (f.nombre.toLowerCase().includes('por enrolar') || f.apellidoP.toLowerCase().includes('por enrolar') || f.nombre.toLowerCase().includes('funcionario'));
+
+                const colorBorde = esPendiente ? 'border-start-warning border-warning' : 'border-start-danger';
+                const colorFondo = esPendiente ? 'bg-warning-light' : 'bg-white';
+                const iconoAlerta = esPendiente ? `<i class="bi bi-exclamation-triangle-fill text-warning me-2" title="Requiere enrolamiento"></i>` : `<i class="bi bi-person-circle me-2 text-secondary"></i>`;
+
+                let filaHTML = `
+                <div class="list-group-item p-0 funcionario-item ${colorBorde} shadow-sm mb-2 rounded">
+                    <div class="row m-0 align-items-center py-3 px-3 ${colorFondo} fila-visible cursor-pointer" onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'calendario', event)">
                         <div class="col-12 col-lg-2 ps-lg-3 mb-2 mb-lg-0 fw-semibold text-muted font-monospace">${formatearRUT(f.rut)}</div>
-                        <div class="col-12 col-lg-3 mb-2 mb-lg-0 text-black fw-bold text-truncate"><i class="bi bi-person-circle me-2 text-secondary"></i>${f.nombre} ${f.apellidoP}</div>
+                        <div class="col-12 col-lg-3 mb-2 mb-lg-0 text-black fw-bold text-truncate">${iconoAlerta}${f.nombre} ${f.apellidoP}</div>
                         <div class="col-6 col-lg-3 text-truncate text-muted d-none d-md-block">${textoSeccion}</div>
                         <div class="col-6 col-lg-2 d-none d-md-block"><span class="badge bg-light text-dark border px-2 py-1"><i class="bi bi-clock me-1"></i>${textoTurno}</span></div>
-                        <div class="col-12 col-lg-2 text-end mt-3 mt-lg-0 pe-lg-3">
-                            <button class="btn btn-sm btn-outline-primary shadow-sm py-1 px-2 me-2 fw-bold" title="Editar" onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'editar', event)">
-                                <i class="bi bi-pencil-square"></i> Editar
+                        
+                        <div class="col-12 col-lg-2 text-end mt-3 mt-lg-0 pe-lg-3 text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-dark shadow-sm py-1 px-2 me-1" title="Ver Credencial" onclick="event.stopPropagation(); verCredencial('${f.rut}', '${f.codigo_tarjeta}', '${f.nombre}', '${f.apellidoP}')">
+                                <i class="bi bi-upc-scan"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger shadow-sm py-1 px-2" title="Eliminar" onclick="event.stopPropagation(); confirmarBorradoFuncionario('${f.rut}')">
+                            <button type="button" class="btn btn-sm btn-outline-primary shadow-sm py-1 px-2 me-1 fw-bold" title="Editar" onclick="abrirPanelFuncionario('${safeId}', '${f.rut}', 'editar', event)">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger shadow-sm py-1 px-2" title="Eliminar" onclick="event.stopPropagation(); confirmarBorradoFuncionario('${f.rut}')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
                     
                     <div id="${colId}" class="collapse panel-desplegado border-top border-bottom border-2 border-danger" data-bs-parent="#contenedor-funcionarios">
-                        <div class="p-3 p-md-4 p-xl-5">
+                        <div class="p-3 p-md-4 p-xl-5 bg-white">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h4 class="fw-bold text-black mb-0 fs-5 fs-md-4"><i class="bi bi-person-vcard me-2 text-danger-yb"></i> Panel del Funcionario</h4>
                                 <button type="button" class="btn-close" aria-label="Close" onclick="cerrarPanelFuncionario('${safeId}', event)"></button>
@@ -133,9 +148,22 @@ async function cargarListaFuncionarios() {
                         </div>
                     </div>
                 </div>`;
+
+                if (esPendiente) {
+                    htmlPendientes += filaHTML;
+                } else {
+                    htmlActivos += filaHTML;
+                }
             });
+
+            contenedorActivos.innerHTML = htmlActivos || '<div class="p-4 text-center text-muted fw-bold">No hay personal activo registrado.</div>';
+            if (contenedorPendientes) {
+                contenedorPendientes.innerHTML = htmlPendientes || '<div class="p-4 text-center text-muted fw-bold">No hay funcionarios pendientes de enrolamiento.</div>';
+            }
+
         } else {
-            contenedor.innerHTML = '<div class="alert alert-warning text-center fw-bold shadow-sm p-4 m-3 fs-5">No hay funcionarios registrados.</div>';
+            contenedorActivos.innerHTML = '<div class="alert alert-warning text-center fw-bold shadow-sm p-4 m-3 fs-5">No hay funcionarios registrados.</div>';
+            if (contenedorPendientes) contenedorPendientes.innerHTML = '';
         }
     } catch (error) {
         console.error("Error cargando lista:", error);
@@ -190,19 +218,19 @@ async function cargarDatosYDibujarCalendario(safeId, rutReal, fecha) {
     const mes = fecha.getMonth() + 1;
     const contenedor = document.getElementById(`calendario-simple-${safeId}`);
 
-    if (contenedor) contenedor.innerHTML = '<div class="text-center py-5 my-5"><div class="spinner-border text-danger-yb" role="status"></div><p class="mt-2 text-muted fw-bold">Consultando asistencia...</p></div>';
+    if (contenedor) contenedor.innerHTML = '<div class="text-center py-5 my-5"><div class="spinner-border text-danger-yb" role="status"></div></div>';
 
     try {
         const req = await fetch(`../../controller/asistencia_controller.php?action=getAsistencia&rut=${rutReal}&mes=${mes}&anio=${año}`);
         const res = await req.json();
         const datosMes = res.status === 1 ? res.data : {};
         
-        // ¡LA MAGIA! Guardamos los datos en la memoria asociados a este trabajador específico
+        window.calendarioData = window.calendarioData || {};
         window.calendarioData[safeId] = datosMes;
         
         dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes);
     } catch (e) {
-        console.error("Error al cargar Calendario:", e);
+        window.calendarioData = window.calendarioData || {};
         window.calendarioData[safeId] = {};
         dibujarCalendarioSimple(safeId, rutReal, fecha, {});
     }
@@ -240,30 +268,25 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
         let bgClass = 'cal-day-empty'; 
         let contenidoCelda = `<div class="fw-bold text-center w-100 h-100 d-flex justify-content-center align-items-center numero-calendario">${dia}</div>`;
 
+        const diaDeLaSemana = new Date(año, mes, dia).getDay();
+
         if (infoDia) {
             if (infoDia.estado === 'licencia') {
                 bgClass = 'cal-day-licencia';
-                contenidoCelda = `
-                    <div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center">
-                        <div class="fw-bold fs-6 mb-1">${dia}</div>
-                        <div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-bandaid"></i><br>Licencia</div>
-                    </div>`;
+                contenidoCelda = `<div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center"><div class="fw-bold fs-6 mb-1">${dia}</div><div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-bandaid"></i><br>Licencia</div></div>`;
+                if (diaDeLaSemana >= 1 && diaDeLaSemana <= 5) totalMinutosMes += 480; 
+
             } else if (infoDia.estado === 'vacaciones') {
                 bgClass = 'cal-day-vacaciones';
-                contenidoCelda = `
-                    <div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center">
-                        <div class="fw-bold fs-6 mb-1">${dia}</div>
-                        <div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-airplane"></i><br>Feriado</div>
-                    </div>`;
+                contenidoCelda = `<div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center"><div class="fw-bold fs-6 mb-1">${dia}</div><div class="fw-bold" style="font-size: 0.7rem;"><i class="bi bi-airplane"></i><br>Feriado</div></div>`;
+                if (diaDeLaSemana >= 1 && diaDeLaSemana <= 5) totalMinutosMes += 480; 
+
             } else if (infoDia.estado === 'falta') {
                 bgClass = 'dia-danger'; 
-                contenidoCelda = `
-                    <div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center">
-                        <div class="fw-bold fs-6 mb-1">${dia}</div>
-                        <div class="fw-bold text-danger" style="font-size: 0.7rem;"><i class="bi bi-x-circle"></i><br>Ausente</div>
-                    </div>`;
+                contenidoCelda = `<div class="p-1 w-100 d-flex flex-column h-100 text-center justify-content-center"><div class="fw-bold fs-6 mb-1">${dia}</div><div class="fw-bold text-danger" style="font-size: 0.7rem;"><i class="bi bi-x-circle"></i><br>Ausente</div></div>`;
             } else {
                 bgClass = infoDia.estado === 'verde' ? 'cal-day-success' : 'cal-day-warning';
+                
                 totalMinutosMes += infoDia.minutos_totales || 0;
                 let badgeExtra = '';
 
@@ -287,8 +310,7 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
             }
         }
         
-        // ENLACE CORREGIDO: Le enviamos el safeId para que busque los datos exactos en memoria
-        htmlCalendario += `<div class="cal-day-box rounded-3 ${bgClass}" style="min-height: 85px; cursor: pointer; transition: transform 0.2s;" title="Ver detalle del día" onclick="abrirModalDetalleDia('${safeId}', ${dia}, ${mes}, ${año})" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${contenidoCelda}</div>`;
+        htmlCalendario += `<div class="cal-day-box rounded-3 ${bgClass}" style="min-height: 85px; cursor: pointer; transition: transform 0.2s;" title="Ver detalle del día" onclick="verDetalleAsistencia('${safeId}', ${dia}, ${mes}, ${año})" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${contenidoCelda}</div>`;
     }
     htmlCalendario += `</div>`;
 
@@ -304,9 +326,86 @@ function dibujarCalendarioSimple(safeId, rutReal, fecha, datosMes) {
     contenedor.innerHTML = htmlCalendario;
 }
 
+function verDetalleAsistencia(safeId, dia, mes, año) {
+    const modalEl = document.getElementById('modalDetalleDia');
+    if (!modalEl) return;
+
+    let datosDelMes = {};
+    if (window.calendarioData && window.calendarioData[safeId]) {
+        datosDelMes = window.calendarioData[safeId];
+    }
+    const infoDia = datosDelMes[dia] || {};
+
+    const estado = (infoDia.estado && String(infoDia.estado) !== "undefined") ? infoDia.estado : 'vacio';
+    const entrada = (infoDia.entrada && String(infoDia.entrada) !== "undefined") ? infoDia.entrada : '--:--';
+    const salida = (infoDia.salida && String(infoDia.salida) !== "undefined") ? infoDia.salida : '--:--';
+    const extra = (infoDia.extra && String(infoDia.extra) !== "undefined") ? infoDia.extra : '00:00';
+    const fotoEntrada = (infoDia.foto_entrada && String(infoDia.foto_entrada) !== "undefined") ? infoDia.foto_entrada : '';
+    const fotoSalida = (infoDia.foto_salida && String(infoDia.foto_salida) !== "undefined") ? infoDia.foto_salida : '';
+
+    document.getElementById('detalle_fecha').innerText = `${dia} de ${nombresMeses[mes]}, ${año}`;
+    
+    const badge = document.getElementById('detalle_estado_badge');
+    if (estado === 'verde') {
+        badge.className = 'badge bg-success rounded-pill px-3 py-1 fs-6 text-white';
+        badge.innerText = 'Asistencia Completa';
+    } else if (estado === 'amarillo') {
+        badge.className = 'badge bg-warning text-dark rounded-pill px-3 py-1 fs-6';
+        badge.innerText = 'Asistencia Incompleta';
+    } else if (estado === 'falta') {
+        badge.className = 'badge bg-danger rounded-pill px-3 py-1 fs-6 text-white';
+        badge.innerText = 'Ausente (Falta)';
+    } else if (estado === 'licencia') {
+        badge.className = 'badge rounded-pill px-3 py-1 fs-6 text-white';
+        badge.style.backgroundColor = '#6f42c1';
+        badge.innerText = 'Licencia Médica';
+    } else if (estado === 'vacaciones') {
+        badge.className = 'badge rounded-pill px-3 py-1 fs-6 text-white';
+        badge.style.backgroundColor = '#087990';
+        badge.innerText = 'Feriado Legal';
+    } else {
+        badge.className = 'badge bg-secondary rounded-pill px-3 py-1 fs-6 text-white';
+        badge.innerText = 'Sin Registro';
+    }
+
+    const cajaFotos = document.getElementById('detalle_caja_fotos');
+    const imgE = document.getElementById('detalle_img_entrada');
+    const imgS = document.getElementById('detalle_img_salida');
+    const colE = document.getElementById('col_foto_entrada');
+    const colS = document.getElementById('col_foto_salida');
+
+    if (fotoEntrada.length > 50 || fotoSalida.length > 50) {
+        cajaFotos.classList.remove('d-none'); 
+        if (fotoEntrada.length > 50) {
+            imgE.src = fotoEntrada;
+            colE.classList.remove('d-none');
+        } else { colE.classList.add('d-none'); }
+
+        if (fotoSalida.length > 50) {
+            imgS.src = fotoSalida;
+            colS.classList.remove('d-none');
+        } else { colS.classList.add('d-none'); }
+    } else {
+        cajaFotos.classList.add('d-none');
+    }
+
+    document.getElementById('detalle_entrada').innerText = entrada;
+    document.getElementById('detalle_salida').innerText = salida;
+
+    const filaExtra = document.getElementById('fila_extra');
+    if (extra !== '00:00') {
+        filaExtra.style.setProperty('display', 'flex', 'important');
+        document.getElementById('detalle_extra').innerText = `+${extra} hrs`;
+    } else {
+        filaExtra.style.setProperty('display', 'none', 'important');
+    }
+
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
 async function guardarEdicionFuncionario(rutOriginal) {
     const rutNuevoLimpio = document.getElementById(`edit_rut_nuevo_${rutOriginal}`).value.replace(/[\.\-]/g, '').trim();
-
     const datos = {
         rut_original: rutOriginal,
         rut_nuevo: rutNuevoLimpio,
@@ -316,7 +415,6 @@ async function guardarEdicionFuncionario(rutOriginal) {
         departamento: document.getElementById(`edit_depto_${rutOriginal}`).value,
         turno: document.getElementById(`edit_turno_${rutOriginal}`).value
     };
-
     const res = await apiFuncionarios.updateFuncionario(datos);
     if (res.status === 1) {
         mostrarNotificacion("Funcionario actualizado con éxito", "success");
@@ -329,7 +427,6 @@ async function guardarEdicionFuncionario(rutOriginal) {
 
 function confirmarBorradoFuncionario(rut) {
     funcionarioAborrarId = rut;
-    seccionABorrarId = null;
     const modal = new bootstrap.Modal(document.getElementById('modalBorrar'));
     modal.show();
 }
@@ -341,9 +438,6 @@ function generarReporteMensual(rutFuncionario) {
     window.open(url, '_blank');
 }
 
-/* =========================================================================
-   FUNCIONES NUEVAS: LICENCIAS Y POPUP DE DETALLE DEL DÍA
-   ========================================================================= */
 function abrirModalAusencia(rut) {
     const modalEl = document.getElementById('modalAusencia');
     if (!modalEl) return;
@@ -382,88 +476,4 @@ async function guardarAusencia() {
             await cargarDatosYDibujarCalendario(safeId, rut, fechaActualVisualizacion);
         } else { mostrarNotificacion("Error: " + res.message, "error"); }
     } catch (error) { mostrarNotificacion("Error de conexión al registrar.", "error"); }
-}
-
-function abrirModalDetalleDia(safeId, dia, mes, año) {
-    const modalEl = document.getElementById('modalDetalleDia');
-    if (!modalEl) return;
-
-    // MAGIA: Recuperamos los datos exactos usando la memoria sin saturar el HTML
-    const datosDelMes = window.calendarioData[safeId] || {};
-    const infoDia = datosDelMes[dia] || {};
-
-    const estado = infoDia.estado || 'vacio';
-    const entrada = infoDia.entrada || '--:--';
-    const salida = infoDia.salida || '--:--';
-    const extra = infoDia.extra || '00:00';
-    const fotoEntrada = infoDia.foto_entrada || '';
-    const fotoSalida = infoDia.foto_salida || '';
-
-    // 1. Colocar la fecha
-    document.getElementById('detalle_fecha').innerText = `${dia} de ${nombresMeses[mes]}, ${año}`;
-    
-    // 2. Colocar el Badge (Etiqueta de estado)
-    const badge = document.getElementById('detalle_estado_badge');
-    if (estado === 'verde') {
-        badge.className = 'badge bg-success rounded-pill px-3 py-1 fs-6';
-        badge.innerText = 'Asistencia Completa';
-    } else if (estado === 'warning') {
-        badge.className = 'badge bg-warning text-dark rounded-pill px-3 py-1 fs-6';
-        badge.innerText = 'Asistencia Incompleta';
-    } else if (estado === 'falta') {
-        badge.className = 'badge bg-danger rounded-pill px-3 py-1 fs-6';
-        badge.innerText = 'Ausente (Falta)';
-    } else if (estado === 'licencia') {
-        badge.className = 'badge rounded-pill px-3 py-1 fs-6 text-white';
-        badge.style.backgroundColor = '#6f42c1';
-        badge.innerText = 'Licencia Médica';
-    } else if (estado === 'vacaciones') {
-        badge.className = 'badge rounded-pill px-3 py-1 fs-6 text-white';
-        badge.style.backgroundColor = '#087990';
-        badge.innerText = 'Feriado Legal';
-    } else {
-        badge.className = 'badge bg-secondary rounded-pill px-3 py-1 fs-6 text-white';
-        badge.innerText = 'Sin Registro';
-    }
-
-    // 3. Encender/Apagar las cajas de fotos redondas gigantes
-    const cajaFotos = document.getElementById('detalle_caja_fotos');
-    const imgE = document.getElementById('detalle_img_entrada');
-    const imgS = document.getElementById('detalle_img_salida');
-    const colE = document.getElementById('col_foto_entrada');
-    const colS = document.getElementById('col_foto_salida');
-
-    // Si existe al menos una foto (Base64 tiene miles de caracteres, filtramos por >50)
-    if ((fotoEntrada && fotoEntrada.length > 50) || (fotoSalida && fotoSalida.length > 50)) {
-        cajaFotos.classList.remove('d-none'); 
-        
-        if (fotoEntrada && fotoEntrada.length > 50) {
-            imgE.src = fotoEntrada;
-            colE.classList.remove('d-none');
-        } else { colE.classList.add('d-none'); }
-
-        if (fotoSalida && fotoSalida.length > 50) {
-            imgS.src = fotoSalida;
-            colS.classList.remove('d-none');
-        } else { colS.classList.add('d-none'); }
-    } else {
-        cajaFotos.classList.add('d-none'); // Ocultar bloque completo si no hay fotos
-    }
-
-    // 4. Colocar las horas de entrada y salida
-    document.getElementById('detalle_entrada').innerText = entrada;
-    document.getElementById('detalle_salida').innerText = salida;
-
-    // 5. Mostrar horas extras si es que hay
-    const filaExtra = document.getElementById('fila_extra');
-    if (extra && extra !== '00:00') {
-        filaExtra.style.setProperty('display', 'flex', 'important');
-        document.getElementById('detalle_extra').innerText = `+${extra} hrs`;
-    } else {
-        filaExtra.style.setProperty('display', 'none', 'important');
-    }
-
-    // 6. Abrir la ventana centrada
-    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-    modal.show();
 }

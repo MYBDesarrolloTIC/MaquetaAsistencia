@@ -36,16 +36,16 @@
                     <input type="hidden" id="turno_id" value="">
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">Nombre del Turno</label>
-                        <input type="text" class="form-control" id="turno_nombre" placeholder="Ej. Mañana, Tarde..." required autocomplete="off">
+                        <input type="text" class="form-control" id="turno_nombre" placeholder="Ej. Mañana, Tarde..." required autocomplete="off" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); guardarTurno(); }">
                     </div>
                     <div class="row mb-3">
                         <div class="col-6">
                             <label class="form-label fw-bold small text-muted">Hora de Entrada</label>
-                            <input type="time" class="form-control" id="turno_entrada" required>
+                            <input type="time" class="form-control" id="turno_entrada" required onkeydown="if(event.key === 'Enter'){ event.preventDefault(); guardarTurno(); }">
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-bold small text-muted">Hora de Salida</label>
-                            <input type="time" class="form-control" id="turno_salida" required>
+                            <input type="time" class="form-control" id="turno_salida" required onkeydown="if(event.key === 'Enter'){ event.preventDefault(); guardarTurno(); }">
                         </div>
                     </div>
                     <div id="alerta-calculo" class="alert alert-info py-2 small d-flex align-items-center mb-0">
@@ -91,7 +91,7 @@
                     <label class="form-label fw-bold small text-muted text-uppercase">Contraseña de Autorización</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white"><i class="bi bi-key-fill text-muted"></i></span>
-                        <input type="password" id="password-admin-borrado" class="form-control" placeholder="Ingrese la contraseña maestra" autocomplete="new-password">
+                        <input type="password" id="password-admin-borrado" class="form-control" placeholder="Ingrese la contraseña maestra" autocomplete="new-password" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); ejecutarBorradoSeguro(); }">
                     </div>
                 </div>
 
